@@ -25,9 +25,7 @@ class MilkTesterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => MilkTesterController(
-        provider: MockMilkTester(),
-      ),
+      create: (_) => MilkTesterController(),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -89,7 +87,11 @@ class _MilkTesterView extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Collar Telemetry Status Pill
+          // 1. Connection Mode Selector (Live Arduino vs Demo Simulation)
+          _buildModeSelector(context, controller),
+          const SizedBox(height: 14),
+
+          // 2. Collar Telemetry Status Pill
           if (collarHistory != null) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -117,28 +119,108 @@ class _MilkTesterView extends StatelessWidget {
             ),
             const SizedBox(height: 14),
           ],
-          // Device Status & Animal Header
+
+          // 3. Device Status & Animal Header
           _buildHardwareStatusCard(context, controller),
           const SizedBox(height: 16),
 
-          // Simulation Preset Selector (when using MockMilkTester)
-          if (controller.provider is MockMilkTester) ...[
+          // 4. Mode-specific controls
+          if (!controller.isHardwareMode) ...[
             _buildPresetSelector(context, controller),
+            const SizedBox(height: 16),
+          ] else if (controller.hardwareMetadata.gasMq2 != null || controller.hardwareMetadata.distanceCm != null) ...[
+            _buildHardwareSensorsBadge(context, controller),
             const SizedBox(height: 16),
           ],
 
-          // Action: Trigger measurement
-          CustomButton(
-            text: controller.hasMeasurement
-                ? 'Retake Milk Measurement'
-                : 'Start Milk Sample Analysis',
-            icon: Icons.biotech_rounded,
-            isLoading: controller.isBusy,
-            onPressed: () => controller.takeMeasurement(cow.id),
+          // 5. Action: Trigger measurement & Continuous Real-time Stream
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: CustomButton(
+                  text: controller.hasMeasurement
+                      ? 'Retake Milk Measurement'
+                      : 'Start Milk Sample Analysis',
+                  icon: controller.isHardwareMode
+                      ? Icons.bluetooth_searching_rounded
+                      : Icons.biotech_rounded,
+                  isLoading: controller.isBusy && !controller.isContinuousStreamActive,
+                  onPressed: () => controller.takeMeasurement(cow.id),
+                ),
+              ),
+              if (controller.isHardwareMode) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: OutlinedButton.icon(
+                    onPressed: () => controller.toggleContinuousStream(cow.id),
+                    icon: Icon(
+                      controller.isContinuousStreamActive
+                          ? Icons.pause_circle_filled_rounded
+                          : Icons.play_circle_fill_rounded,
+                      size: 18,
+                      color: controller.isContinuousStreamActive
+                          ? AppColors.error
+                          : AppColors.primary,
+                    ),
+                    label: Text(
+                      controller.isContinuousStreamActive ? 'Stop Live' : 'Live Stream',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: controller.isContinuousStreamActive
+                            ? AppColors.error
+                            : AppColors.primary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                      side: BorderSide(
+                        color: controller.isContinuousStreamActive
+                            ? AppColors.error
+                            : AppColors.primary,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
+          if (controller.isContinuousStreamActive) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.successLight,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.sensors_rounded, size: 14, color: AppColors.success),
+                  SizedBox(width: 6),
+                  Text(
+                    'Real-Time Live Sensor Telemetry Active (1.5s refresh)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
-          // Measurement Results Section
+          // 6. Measurement Results Section
           if (controller.isBusy)
             _buildMeasuringIndicator(controller.state)
           else if (measurement != null)
@@ -224,6 +306,130 @@ class _MilkTesterView extends StatelessWidget {
     );
   }
 
+  Widget _buildModeSelector(BuildContext context, MilkTesterController controller) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildModeTab(
+              title: 'Live Arduino (HC-05)',
+              icon: Icons.bluetooth_rounded,
+              isSelected: controller.isHardwareMode,
+              onTap: () => controller.setMode(TesterMode.hardware),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _buildModeTab(
+              title: 'Demo Simulation',
+              icon: Icons.science_rounded,
+              isSelected: !controller.isHardwareMode,
+              onTap: () => controller.setMode(TesterMode.simulation),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeTab({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHardwareSensorsBadge(BuildContext context, MilkTesterController controller) {
+    final meta = controller.hardwareMetadata;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          if (meta.gasMq2 != null)
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.air_rounded, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'MQ-2 Gas: ${meta.gasMq2}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (meta.gasMq2 != null && meta.distanceCm != null)
+            Container(width: 1, height: 16, margin: const EdgeInsets.symmetric(horizontal: 8), color: AppColors.primary.withValues(alpha: 0.3)),
+          if (meta.distanceCm != null)
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.straighten_rounded, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'Dist: ${meta.distanceCm} cm',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHardwareStatusCard(
     BuildContext context,
     MilkTesterController controller,
@@ -235,17 +441,23 @@ class _MilkTesterView extends StatelessWidget {
     switch (controller.state) {
       case MilkTestingState.disconnected:
         statusColor = AppColors.textMuted;
-        statusText = 'Tester Standby (Mock Provider)';
+        statusText = controller.isHardwareMode
+            ? 'Tester Standby (Arduino HC-05 Ready)'
+            : 'Tester Standby (Mock Provider)';
         statusIcon = Icons.bluetooth_disabled_rounded;
         break;
       case MilkTestingState.searching:
         statusColor = Colors.blue;
-        statusText = 'Scanning for ESP32 Milk Tester...';
+        statusText = controller.isHardwareMode
+            ? 'Scanning for HC-05 Bluetooth...'
+            : 'Scanning for ESP32 Milk Tester...';
         statusIcon = Icons.bluetooth_searching_rounded;
         break;
       case MilkTestingState.connecting:
         statusColor = AppColors.secondary;
-        statusText = 'Connecting via BLE/GATT...';
+        statusText = controller.isHardwareMode
+            ? 'Connecting to HC-05 (9600 baud)...'
+            : 'Connecting via BLE/GATT...';
         statusIcon = Icons.bluetooth_connected_rounded;
         break;
       case MilkTestingState.connected:
@@ -255,7 +467,9 @@ class _MilkTesterView extends StatelessWidget {
         break;
       case MilkTestingState.measuring:
         statusColor = Colors.purple;
-        statusText = 'Reading Spectrometry & Conductivity Cell...';
+        statusText = controller.isHardwareMode
+            ? 'Reading ADC & Spectrometry Stream...'
+            : 'Reading Spectrometry & Conductivity Cell...';
         statusIcon = Icons.sensors_rounded;
         break;
       case MilkTestingState.completed:
@@ -345,13 +559,15 @@ class _MilkTesterView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.tune_rounded, size: 16, color: AppColors.secondary),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Mock Simulation Preset (SIH Evaluation)',
+                  'Simulation Presets (Testing Profiles)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -362,77 +578,31 @@ class _MilkTesterView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _presetChip(
-                label: 'Healthy Normal',
-                preset: MockSamplePreset.healthy,
-                selected: controller.activePreset == MockSamplePreset.healthy,
-                onTap: () => controller.setPreset(MockSamplePreset.healthy),
-              ),
-              _presetChip(
-                label: 'Subclinical Mastitis',
-                preset: MockSamplePreset.subclinical,
-                selected: controller.activePreset == MockSamplePreset.subclinical,
-                onTap: () => controller.setPreset(MockSamplePreset.subclinical),
-              ),
-              _presetChip(
-                label: 'Clinical Mastitis',
-                preset: MockSamplePreset.clinical,
-                selected: controller.activePreset == MockSamplePreset.clinical,
-                onTap: () => controller.setPreset(MockSamplePreset.clinical),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _presetChip({
-    required String label,
-    required MockSamplePreset preset,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: selected ? AppColors.textLight : AppColors.textPrimary,
-        ),
-      ),
-      selected: selected,
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surface,
-      showCheckmark: false,
-      onSelected: (_) => onTap(),
-    );
-  }
-
-  Widget _buildMeasuringIndicator(MilkTestingState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            state == MilkTestingState.measuring
-                ? 'Sampling milk electrodes & optical sensor...'
-                : 'Connecting to Milk Tester ESP32...',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildPresetChip(
+                  label: 'Healthy Sample',
+                  preset: MockSamplePreset.healthy,
+                  activePreset: controller.activePreset,
+                  onSelected: () => controller.setPreset(MockSamplePreset.healthy),
+                ),
+                const SizedBox(width: 8),
+                _buildPresetChip(
+                  label: 'Subclinical Risk',
+                  preset: MockSamplePreset.subclinical,
+                  activePreset: controller.activePreset,
+                  onSelected: () => controller.setPreset(MockSamplePreset.subclinical),
+                ),
+                const SizedBox(width: 8),
+                _buildPresetChip(
+                  label: 'Clinical Mastitis',
+                  preset: MockSamplePreset.clinical,
+                  activePreset: controller.activePreset,
+                  onSelected: () => controller.setPreset(MockSamplePreset.clinical),
+                ),
+              ],
             ),
           ),
         ],
@@ -440,19 +610,58 @@ class _MilkTesterView extends StatelessWidget {
     );
   }
 
+  Widget _buildPresetChip({
+    required String label,
+    required MockSamplePreset preset,
+    required MockSamplePreset? activePreset,
+    required VoidCallback onSelected,
+  }) {
+    final isSelected = preset == activePreset;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onSelected(),
+      labelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        color: isSelected ? Colors.white : AppColors.textPrimary,
+      ),
+      selectedColor: AppColors.secondary,
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: isSelected ? AppColors.secondary : AppColors.border,
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
-        children: const [
-          Icon(Icons.science_outlined, size: 48, color: AppColors.textMuted),
-          SizedBox(height: 12),
-          Text(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.sensors_rounded,
+              size: 40,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
             'No Milk Measurement Yet',
             style: TextStyle(
               fontSize: 16,
@@ -460,12 +669,51 @@ class _MilkTesterView extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            'Press the button above to capture physical milk parameters for this cow.',
+          const SizedBox(height: 8),
+          const Text(
+            'Insert sampling strip into the tester and tap Start Analysis to stream real-time spectrometry & conductivity metrics.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMeasuringIndicator(MilkTestingState state) {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          const CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Acquiring Milk Telemetry...',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            state == MilkTestingState.connecting
+                ? 'Handshaking BLE / RFCOMM connection...'
+                : 'Processing multi-wavelength optical transmission...',
+            style: const TextStyle(
+              fontSize: 12,
               color: AppColors.textSecondary,
             ),
           ),
@@ -498,42 +746,45 @@ class _MilkTesterView extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: measurement.isValid
-                    ? AppColors.successLight
-                    : AppColors.errorLight,
+                color: AppColors.successLight,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
-                measurement.isValid ? 'Valid Sample' : 'Physiological Warning',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: measurement.isValid
-                      ? AppColors.success
-                      : AppColors.error,
-                ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_rounded, size: 14, color: AppColors.success),
+                  SizedBox(width: 4),
+                  Text(
+                    'Valid Sample',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
-        // Grid of 6 milk parameters with resilient aspect ratio and inner layout
+        // 2x3 Metric Card Grid
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.30,
+          childAspectRatio: 1.35,
           children: [
             _buildMetricCard(
               title: 'Temperature',
               value: '${measurement.milkTemperature.toStringAsFixed(1)} °C',
-              subtitle: 'Normal: 35.0 - 38.0 °C',
-              isWarning: measurement.milkTemperature > 38.0,
+              subtitle: 'Normal: 35.0 - 37.8 °C',
+              isWarning: measurement.milkTemperature > 37.8,
               icon: Icons.thermostat_rounded,
             ),
             _buildMetricCard(
@@ -541,7 +792,7 @@ class _MilkTesterView extends StatelessWidget {
               value: measurement.ph.toStringAsFixed(2),
               subtitle: 'Normal: 6.50 - 6.80',
               isWarning: measurement.isPhAbnormal,
-              icon: Icons.water_drop_outlined,
+              icon: Icons.water_drop_rounded,
             ),
             _buildMetricCard(
               title: 'Conductivity',

@@ -6,6 +6,7 @@ import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../cow_selection/presentation/screens/cow_selection_screen.dart';
 import '../../../milk_tester/domain/entities/milk_measurement.dart';
 import '../../domain/entities/analysis_result.dart';
+import '../widgets/share_report_bottom_sheet.dart';
 
 class AnalysisResultScreen extends StatelessWidget {
   final Cow cow;
@@ -21,6 +22,20 @@ class AnalysisResultScreen extends StatelessWidget {
     required this.result,
   });
 
+  void _openShareOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ShareReportBottomSheet(
+        cow: cow,
+        milkMeasurement: milkMeasurement,
+        result: result,
+        collarHistory: collarHistory,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,6 +47,11 @@ class AnalysisResultScreen extends StatelessWidget {
           child: Text('Mastitis Risk Assessment'),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Share Report',
+            icon: const Icon(Icons.share_rounded, color: AppColors.primary),
+            onPressed: () => _openShareOptions(context),
+          ),
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -84,9 +104,18 @@ class AnalysisResultScreen extends StatelessWidget {
 
             // 5. Test Parameter Summary Breakdown
             _buildParameterBreakdown(context),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
-            // 6. Action: New Test
+            // 6. Action: Share / Export Clinical Report
+            CustomButton(
+              text: 'Share Clinical Report / WhatsApp',
+              icon: Icons.share_rounded,
+              backgroundColor: const Color(0xFF1E7E34),
+              onPressed: () => _openShareOptions(context),
+            ),
+            const SizedBox(height: 12),
+
+            // 7. Action: Done & Select Next Animal
             CustomButton(
               text: 'Done & Select Next Animal',
               icon: Icons.check_circle_outline_rounded,
@@ -248,15 +277,15 @@ class AnalysisResultScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
-              Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
+          const Row(
+            children: [
+              Icon(Icons.insights_rounded, color: AppColors.primary, size: 20),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Key Diagnostic Drivers',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -264,11 +293,15 @@ class AnalysisResultScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (result.factors.isEmpty)
             const Text(
-              'No significant anomalous feature deviations detected.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              'No abnormal biomarker variances detected.',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
             )
           else
             ...result.factors.map(
@@ -277,21 +310,26 @@ class AnalysisResultScreen extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      result.isHighRisk
-                          ? Icons.arrow_upward_rounded
-                          : Icons.check_circle_outline_rounded,
-                      size: 16,
-                      color: result.isHighRisk ? AppColors.error : AppColors.success,
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: result.isHighRisk
+                            ? AppColors.error
+                            : (result.isModerateRisk ? AppColors.warning : AppColors.success),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         factor,
                         style: const TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
                           color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          height: 1.3,
                         ),
                       ),
                     ),
@@ -310,14 +348,16 @@ class AnalysisResultScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
-              Icon(Icons.medical_services_outlined, size: 18, color: AppColors.primary),
+          const Row(
+            children: [
+              Icon(Icons.medical_services_rounded, color: AppColors.primary, size: 20),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
