@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
-import 'core/constants/app_constants.dart';
+import 'core/localization/app_localizations.dart';
+import 'core/localization/locale_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -15,20 +17,29 @@ void main() async {
   final AuthRepository authRepository = AuthRepositoryImpl();
   final authController = AuthController(authRepository: authRepository);
 
-  // Check if a persisted user session exists
-  await authController.checkAuthStatus();
+  // Load locale preference and auth session in parallel
+  final localeController = LocaleController();
+  await Future.wait([
+    authController.checkAuthStatus(),
+    localeController.loadSavedLocale(),
+  ]);
 
   runApp(
-    GauPrahariApp(authController: authController),
+    GauPrahariApp(
+      authController: authController,
+      localeController: localeController,
+    ),
   );
 }
 
 class GauPrahariApp extends StatelessWidget {
   final AuthController authController;
+  final LocaleController localeController;
 
   const GauPrahariApp({
     super.key,
     required this.authController,
+    required this.localeController,
   });
 
   @override
@@ -36,12 +47,25 @@ class GauPrahariApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthController>.value(value: authController),
+        ChangeNotifierProvider<LocaleController>.value(value: localeController),
       ],
-      child: MaterialApp(
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: const AuthGate(),
+      child: Consumer<LocaleController>(
+        builder: (context, localeCtrl, _) {
+          return MaterialApp(
+            title: 'Gau-Prahari',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            locale: localeCtrl.locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const AuthGate(),
+          );
+        },
       ),
     );
   }
@@ -54,22 +78,23 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
+    final t = AppLocalizations.of(context);
 
     if (authController.status == AuthStatus.initial ||
         (authController.isLoading && authController.currentUser == null)) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(
+              const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
-                'Initializing Gau-Prahari...',
-                style: TextStyle(
+                t.translate('initializingApp'),
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

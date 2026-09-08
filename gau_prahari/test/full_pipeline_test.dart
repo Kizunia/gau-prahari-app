@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gau_prahari/core/localization/locale_controller.dart';
 import 'package:gau_prahari/features/auth/domain/entities/user.dart';
 import 'package:gau_prahari/features/auth/domain/repositories/auth_repository.dart';
 import 'package:gau_prahari/features/auth/presentation/controllers/auth_controller.dart';
@@ -48,8 +49,9 @@ void main() {
     final authRepo = MockPipelineAuthRepository();
     final authController = AuthController(authRepository: authRepo);
     await authController.checkAuthStatus();
+    final localeController = LocaleController();
 
-    await tester.pumpWidget(GauPrahariApp(authController: authController));
+    await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
     // 1. Login Screen -> Tap Field Vet chip & Sign In

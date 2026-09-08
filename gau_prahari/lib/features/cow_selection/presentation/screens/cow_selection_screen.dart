@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gau_prahari/core/constants/app_colors.dart';
-import 'package:gau_prahari/core/constants/app_constants.dart';
 import 'package:gau_prahari/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:gau_prahari/features/collar_import/presentation/screens/collar_import_screen.dart';
 import 'package:gau_prahari/features/cow_selection/domain/entities/cow.dart';
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../shared/widgets/language_selector.dart';
 
 class CowSelectionScreen extends StatelessWidget {
   const CowSelectionScreen({super.key});
@@ -13,29 +14,32 @@ class CowSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
     final user = authController.currentUser;
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppConstants.appName),
+        title: Text(t.translate('appName')),
         actions: [
+          const LanguageSelector(),
+          const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Sign Out',
+            tooltip: t.translate('signOut'),
             icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Sign Out'),
-                  content: const Text('Are you sure you want to sign out?'),
+                  title: Text(t.translate('signOutConfirmTitle')),
+                  content: Text(t.translate('signOutConfirmMessage')),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
+                      child: Text(t.translate('cancel')),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Sign Out', style: TextStyle(color: AppColors.error)),
+                      child: Text(t.translate('signOut'), style: const TextStyle(color: AppColors.error)),
                     ),
                   ],
                 ),
@@ -60,10 +64,10 @@ class CowSelectionScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Select Animal for Analysis',
-                    style: TextStyle(
+                    t.translate('selectAnimalForAnalysis'),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -77,9 +81,9 @@ class CowSelectionScreen extends StatelessWidget {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Round II',
-                    style: TextStyle(
+                  child: Text(
+                    t.translate('roundII'),
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
@@ -141,13 +145,13 @@ class CowSelectionScreen extends StatelessWidget {
                 border: Border.all(color: AppColors.border),
               ),
               child: Row(
-                children: const [
-                  Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 22),
-                  SizedBox(width: 12),
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 22),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Next Phase: Select a cow to import collar history (CSV/JSON) and connect the Milk Tester.',
-                      style: TextStyle(
+                      t.translate('nextPhaseInfo'),
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                         height: 1.3,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../milk_tester/domain/entities/milk_measurement.dart';
 import '../../../collar_import/domain/entities/collar_telemetry.dart';
@@ -39,6 +40,7 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -80,21 +82,21 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                   child: const Icon(Icons.share_rounded, color: AppColors.primary, size: 22),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Export & Share Report',
-                        style: TextStyle(
+                        t.translate('exportShareReport'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
-                        'Send clinical mastitis summary to Veterinarian / Co-op',
-                        style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        t.translate('exportShareSubtitle'),
+                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -108,8 +110,8 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
               controller: _vetPhoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'Veterinarian / Co-op WhatsApp Number (Optional)',
-                hintText: '+91 98765 43210',
+                labelText: t.translate('vetWhatsappNumber'),
+                hintText: t.translate('vetPhoneHint'),
                 prefixIcon: const Icon(Icons.phone_rounded, size: 20, color: AppColors.primary),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -121,8 +123,8 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
             _buildActionTile(
               icon: Icons.chat_rounded,
               iconColor: const Color(0xFF25D366),
-              title: 'Share via WhatsApp',
-              subtitle: 'Pre-formatted clinical diagnosis with telemetry readings',
+              title: t.translate('shareViaWhatsapp'),
+              subtitle: t.translate('shareViaWhatsappSubtitle'),
               onTap: () async {
                 final phone = _vetPhoneController.text.trim();
                 final uri = _exportService.generateWhatsAppUri(
@@ -145,7 +147,7 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('WhatsApp report prepared! URI: ${uri.toString().substring(0, 45)}... (Copied to clipboard)'),
+                      content: Text('${t.translate("whatsappReportPrepared")} ${uri.toString().substring(0, 45)}... (Copied to clipboard)'),
                       backgroundColor: const Color(0xFF25D366),
                       duration: const Duration(seconds: 3),
                     ),
@@ -159,8 +161,8 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
             _buildActionTile(
               icon: _copied ? Icons.check_circle_rounded : Icons.copy_rounded,
               iconColor: _copied ? AppColors.success : AppColors.primary,
-              title: _copied ? 'Report Copied!' : 'Copy Summary to Clipboard',
-              subtitle: 'Formatted text for SMS, email, or messaging apps',
+              title: _copied ? t.translate('reportCopied') : t.translate('copySummaryToClipboard'),
+              subtitle: t.translate('copySummarySubtitle'),
               onTap: () async {
                 await _exportService.copyReportToClipboard(
                   cow: widget.cow,
@@ -171,10 +173,10 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                 setState(() => _copied = true);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Full clinical diagnostic report copied to clipboard!'),
+                    SnackBar(
+                      content: Text(t.translate('fullReportCopied')),
                       backgroundColor: AppColors.success,
-                      duration: Duration(seconds: 2),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
                 }
@@ -186,8 +188,8 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
             _buildActionTile(
               icon: Icons.card_membership_rounded,
               iconColor: AppColors.secondary,
-              title: 'View Diagnostic Certificate Card',
-              subtitle: 'Printable medical card with official project seal',
+              title: t.translate('viewDiagnosticCertificate'),
+              subtitle: t.translate('viewCertificateSubtitle'),
               onTap: () {
                 Navigator.of(context).pop();
                 showDialog(

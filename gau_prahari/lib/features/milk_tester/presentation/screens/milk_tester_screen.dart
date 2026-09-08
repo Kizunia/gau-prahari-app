@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../cow_selection/domain/entities/cow.dart';
@@ -24,15 +26,16 @@ class MilkTesterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return ChangeNotifierProvider(
       create: (_) => MilkTesterController(),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const FittedBox(
+          title: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text('Handheld Milk Tester'),
+            child: Text(t.translate('handheldMilkTester')),
           ),
           actions: [
             Container(
@@ -80,6 +83,7 @@ class _MilkTesterView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final controller = context.watch<MilkTesterController>();
     final measurement = controller.measurement;
 
@@ -106,7 +110,7 @@ class _MilkTesterView extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Collar Telemetry Attached: ${collarHistory!.recordCount} Days (Mean Skin Temp: ${collarHistory!.meanSkinTemperature.toStringAsFixed(1)} °C, THI: ${collarHistory!.meanThi.toStringAsFixed(1)})',
+                      t.translate('collarTelemetryAttached', args: {'days': collarHistory!.recordCount.toString(), 'skinTemp': collarHistory!.meanSkinTemperature.toStringAsFixed(1), 'thi': collarHistory!.meanThi.toStringAsFixed(1)}),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -140,8 +144,8 @@ class _MilkTesterView extends StatelessWidget {
                 flex: 3,
                 child: CustomButton(
                   text: controller.hasMeasurement
-                      ? 'Retake Milk Measurement'
-                      : 'Start Milk Sample Analysis',
+                      ? t.translate('retakeMilkMeasurement')
+                      : t.translate('startMilkSampleAnalysis'),
                   icon: controller.isHardwareMode
                       ? Icons.bluetooth_searching_rounded
                       : Icons.biotech_rounded,
@@ -165,7 +169,7 @@ class _MilkTesterView extends StatelessWidget {
                           : AppColors.primary,
                     ),
                     label: Text(
-                      controller.isContinuousStreamActive ? 'Stop Live' : 'Live Stream',
+                      controller.isContinuousStreamActive ? t.translate('stopLive') : t.translate('liveStream'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -201,13 +205,13 @@ class _MilkTesterView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.sensors_rounded, size: 14, color: AppColors.success),
-                  SizedBox(width: 6),
+                  const Icon(Icons.sensors_rounded, size: 14, color: AppColors.success),
+                  const SizedBox(width: 6),
                   Text(
-                    'Real-Time Live Sensor Telemetry Active (1.5s refresh)',
+                    t.translate('realTimeSensorActive'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -222,16 +226,16 @@ class _MilkTesterView extends StatelessWidget {
 
           // 6. Measurement Results Section
           if (controller.isBusy)
-            _buildMeasuringIndicator(controller.state)
+            _buildMeasuringIndicator(context, controller.state)
           else if (measurement != null)
             _buildResultsSection(context, measurement)
           else
-            _buildEmptyState(),
+            _buildEmptyState(context),
 
           if (measurement != null) ...[
             const SizedBox(height: 24),
             CustomButton(
-              text: 'Proceed to Mastitis Risk Analysis',
+              text: t.translate('proceedToAnalysis'),
               icon: Icons.analytics_rounded,
               backgroundColor: AppColors.primaryDark,
               onPressed: () async {
@@ -239,19 +243,19 @@ class _MilkTesterView extends StatelessWidget {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (ctx) => const Center(
+                  builder: (ctx) => Center(
                     child: Card(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(
+                            const CircularProgressIndicator(
                               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text(
-                              'Running AI Mastitis Risk Model...',
+                              t.translate('runningAiModel'),
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -292,7 +296,7 @@ class _MilkTesterView extends StatelessWidget {
                     Navigator.of(context).pop(); // dismiss loading
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Analysis Error: $e'),
+                        content: Text(t.translate('analysisError', args: {'error': e.toString()})),
                         backgroundColor: AppColors.error,
                       ),
                     );
@@ -307,6 +311,7 @@ class _MilkTesterView extends StatelessWidget {
   }
 
   Widget _buildModeSelector(BuildContext context, MilkTesterController controller) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -318,7 +323,7 @@ class _MilkTesterView extends StatelessWidget {
         children: [
           Expanded(
             child: _buildModeTab(
-              title: 'Live Arduino (HC-05)',
+              title: t.translate('liveArduino'),
               icon: Icons.bluetooth_rounded,
               isSelected: controller.isHardwareMode,
               onTap: () => controller.setMode(TesterMode.hardware),
@@ -327,7 +332,7 @@ class _MilkTesterView extends StatelessWidget {
           const SizedBox(width: 4),
           Expanded(
             child: _buildModeTab(
-              title: 'Demo Simulation',
+              title: t.translate('demoSimulation'),
               icon: Icons.science_rounded,
               isSelected: !controller.isHardwareMode,
               onTap: () => controller.setMode(TesterMode.simulation),
@@ -377,6 +382,7 @@ class _MilkTesterView extends StatelessWidget {
   }
 
   Widget _buildHardwareSensorsBadge(BuildContext context, MilkTesterController controller) {
+    final t = AppLocalizations.of(context);
     final meta = controller.hardwareMetadata;
     return Container(
       padding: const EdgeInsets.all(12),
@@ -396,7 +402,7 @@ class _MilkTesterView extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      'MQ-2 Gas: ${meta.gasMq2}',
+                      t.translate('mq2Gas', args: {'value': meta.gasMq2.toString()}),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
@@ -416,7 +422,7 @@ class _MilkTesterView extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      'Dist: ${meta.distanceCm} cm',
+                      t.translate('distanceCm', args: {'value': meta.distanceCm.toString()}),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
@@ -434,6 +440,7 @@ class _MilkTesterView extends StatelessWidget {
     BuildContext context,
     MilkTesterController controller,
   ) {
+    final t = AppLocalizations.of(context);
     Color statusColor;
     String statusText;
     IconData statusIcon;
@@ -442,44 +449,44 @@ class _MilkTesterView extends StatelessWidget {
       case MilkTestingState.disconnected:
         statusColor = AppColors.textMuted;
         statusText = controller.isHardwareMode
-            ? 'Tester Standby (Arduino HC-05 Ready)'
-            : 'Tester Standby (Mock Provider)';
+            ? t.translate('testerStandbyArduino')
+            : t.translate('testerStandbyMock');
         statusIcon = Icons.bluetooth_disabled_rounded;
         break;
       case MilkTestingState.searching:
         statusColor = Colors.blue;
         statusText = controller.isHardwareMode
-            ? 'Scanning for HC-05 Bluetooth...'
-            : 'Scanning for ESP32 Milk Tester...';
+            ? t.translate('scanningHc05')
+            : t.translate('scanningEsp32');
         statusIcon = Icons.bluetooth_searching_rounded;
         break;
       case MilkTestingState.connecting:
         statusColor = AppColors.secondary;
         statusText = controller.isHardwareMode
-            ? 'Connecting to HC-05 (9600 baud)...'
-            : 'Connecting via BLE/GATT...';
+            ? t.translate('connectingHc05')
+            : t.translate('connectingBle');
         statusIcon = Icons.bluetooth_connected_rounded;
         break;
       case MilkTestingState.connected:
         statusColor = AppColors.primary;
-        statusText = 'Connected to Milk Tester';
+        statusText = t.translate('connectedToMilkTester');
         statusIcon = Icons.bluetooth_connected_rounded;
         break;
       case MilkTestingState.measuring:
         statusColor = Colors.purple;
         statusText = controller.isHardwareMode
-            ? 'Reading ADC & Spectrometry Stream...'
-            : 'Reading Spectrometry & Conductivity Cell...';
+            ? t.translate('readingAdcStream')
+            : t.translate('readingSpectrometry');
         statusIcon = Icons.sensors_rounded;
         break;
       case MilkTestingState.completed:
         statusColor = AppColors.success;
-        statusText = 'Milk Sample Captured Successfully';
+        statusText = t.translate('milkSampleCaptured');
         statusIcon = Icons.check_circle_rounded;
         break;
       case MilkTestingState.error:
         statusColor = AppColors.error;
-        statusText = controller.errorMessage ?? 'Hardware Communication Error';
+        statusText = controller.errorMessage ?? t.translate('hardwareCommunicationError');
         statusIcon = Icons.error_outline_rounded;
         break;
     }
@@ -516,7 +523,7 @@ class _MilkTesterView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Animal: ${cow.id} (${cow.breed})',
+                  '${t.translate("animalPrefix")} ${cow.id} (${cow.breed})',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -549,6 +556,7 @@ class _MilkTesterView extends StatelessWidget {
     BuildContext context,
     MilkTesterController controller,
   ) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -559,13 +567,13 @@ class _MilkTesterView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.tune_rounded, size: 16, color: AppColors.secondary),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Simulation Presets (Testing Profiles)',
+                  t.translate('simulationPresets'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -583,21 +591,21 @@ class _MilkTesterView extends StatelessWidget {
             child: Row(
               children: [
                 _buildPresetChip(
-                  label: 'Healthy Sample',
+                  label: t.translate('healthySample'),
                   preset: MockSamplePreset.healthy,
                   activePreset: controller.activePreset,
                   onSelected: () => controller.setPreset(MockSamplePreset.healthy),
                 ),
                 const SizedBox(width: 8),
                 _buildPresetChip(
-                  label: 'Subclinical Risk',
+                  label: t.translate('subclinicalRisk'),
                   preset: MockSamplePreset.subclinical,
                   activePreset: controller.activePreset,
                   onSelected: () => controller.setPreset(MockSamplePreset.subclinical),
                 ),
                 const SizedBox(width: 8),
                 _buildPresetChip(
-                  label: 'Clinical Mastitis',
+                  label: t.translate('clinicalMastitis'),
                   preset: MockSamplePreset.clinical,
                   activePreset: controller.activePreset,
                   onSelected: () => controller.setPreset(MockSamplePreset.clinical),
@@ -637,7 +645,8 @@ class _MilkTesterView extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       alignment: Alignment.center,
@@ -661,8 +670,8 @@ class _MilkTesterView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No Milk Measurement Yet',
+          Text(
+            t.translate('noMilkMeasurementYet'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -670,8 +679,8 @@ class _MilkTesterView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Insert sampling strip into the tester and tap Start Analysis to stream real-time spectrometry & conductivity metrics.',
+          Text(
+            t.translate('noMilkMeasurementDescription'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -684,7 +693,8 @@ class _MilkTesterView extends StatelessWidget {
     );
   }
 
-  Widget _buildMeasuringIndicator(MilkTestingState state) {
+  Widget _buildMeasuringIndicator(BuildContext context, MilkTestingState state) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(28),
       alignment: Alignment.center,
@@ -699,8 +709,8 @@ class _MilkTesterView extends StatelessWidget {
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Acquiring Milk Telemetry...',
+          Text(
+            t.translate('acquiringMilkTelemetry'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -710,8 +720,8 @@ class _MilkTesterView extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             state == MilkTestingState.connecting
-                ? 'Handshaking BLE / RFCOMM connection...'
-                : 'Processing multi-wavelength optical transmission...',
+                ? t.translate('handshakingConnection')
+                : t.translate('processingOpticalTransmission'),
             style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -726,15 +736,16 @@ class _MilkTesterView extends StatelessWidget {
     BuildContext context,
     MilkMeasurement measurement,
   ) {
+    final t = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Sample Measurements',
+                t.translate('sampleMeasurements'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -751,13 +762,13 @@ class _MilkTesterView extends StatelessWidget {
                 color: AppColors.successLight,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_rounded, size: 14, color: AppColors.success),
-                  SizedBox(width: 4),
+                  const Icon(Icons.check_rounded, size: 14, color: AppColors.success),
+                  const SizedBox(width: 4),
                   Text(
-                    'Valid Sample',
+                    t.translate('validSample'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -781,44 +792,44 @@ class _MilkTesterView extends StatelessWidget {
           childAspectRatio: 1.35,
           children: [
             _buildMetricCard(
-              title: 'Temperature',
+              title: t.translate('temperatureLabel'),
               value: '${measurement.milkTemperature.toStringAsFixed(1)} °C',
-              subtitle: 'Normal: 35.0 - 37.8 °C',
+              subtitle: t.translate('normalTempRange'),
               isWarning: measurement.milkTemperature > 37.8,
               icon: Icons.thermostat_rounded,
             ),
             _buildMetricCard(
-              title: 'pH Value',
+              title: t.translate('phValueLabel'),
               value: measurement.ph.toStringAsFixed(2),
-              subtitle: 'Normal: 6.50 - 6.80',
+              subtitle: t.translate('normalPhRange'),
               isWarning: measurement.isPhAbnormal,
               icon: Icons.water_drop_rounded,
             ),
             _buildMetricCard(
-              title: 'Conductivity',
+              title: t.translate('conductivityLabel'),
               value: '${measurement.conductivity.toStringAsFixed(2)} mS/cm',
-              subtitle: 'Normal: 4.5 - 5.8 mS/cm',
+              subtitle: t.translate('normalConductivityRange'),
               isWarning: measurement.isConductivityElevated,
               icon: Icons.electric_bolt_rounded,
             ),
             _buildMetricCard(
-              title: 'Somatic Cell Count',
+              title: t.translate('somaticCellCountLabel'),
               value: '${measurement.scc ~/ 1000}k /mL',
-              subtitle: 'Risk Threshold: >250k',
+              subtitle: t.translate('riskThresholdScc'),
               isWarning: measurement.isSccElevated,
               icon: Icons.grain_rounded,
             ),
             _buildMetricCard(
-              title: 'Fat Content',
+              title: t.translate('fatContentLabel'),
               value: '${measurement.fat.toStringAsFixed(1)} %',
-              subtitle: 'Typical: 3.5 - 5.0 %',
+              subtitle: t.translate('typicalFatRange'),
               isWarning: false,
               icon: Icons.opacity_rounded,
             ),
             _buildMetricCard(
-              title: 'SNF (Solids)',
+              title: t.translate('snfSolidsLabel'),
               value: '${measurement.snf.toStringAsFixed(1)} %',
-              subtitle: 'Typical: 8.0 - 9.5 %',
+              subtitle: t.translate('typicalSnfRange'),
               isWarning: false,
               icon: Icons.pie_chart_outline_rounded,
             ),

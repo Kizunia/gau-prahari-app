@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../milk_tester/domain/entities/milk_measurement.dart';
 import '../../../collar_import/domain/entities/collar_telemetry.dart';
@@ -23,6 +24,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final isHighRisk = result.riskLevel == 'HIGH';
     final isModRisk = result.riskLevel == 'MODERATE';
     final riskColor = isHighRisk
@@ -55,25 +57,25 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                     child: const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 22),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Gau-Prahari Clinical Card',
+                          t.translate('gauPrahariClinicalCard'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
                           ),
                         ),
                         Text(
-                          'SIH26109 Diagnostic Telemetry',
+                          t.translate('sihDiagnosticTelemetry'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
@@ -105,7 +107,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'Animal: ${cow.id} (Tag: ${cow.tagNumber})',
+                            '${t.translate("animalPrefix")} ${cow.id} (${t.translate("tagPrefix")} ${cow.tagNumber})',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -118,7 +120,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'Breed: ${cow.breed}',
+                            '${t.translate("breedPrefix")} ${cow.breed}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -134,7 +136,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'Lactation: ${cow.lactationStage}',
+                            '${t.translate("lactationPrefix")} ${cow.lactationStage}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
@@ -143,7 +145,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'Date: ${DateTime.now().toLocal().toString().substring(0, 10)}',
+                            '${t.translate("datePrefix")} ${DateTime.now().toLocal().toString().substring(0, 10)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
@@ -178,7 +180,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Risk: ${result.riskLevel}',
+                          '${t.translate("riskPrefix")} ${result.riskLevel}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
@@ -188,7 +190,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      'Prob: ${(prob * 100).toStringAsFixed(1)}%',
+                      '${t.translate("probPrefix")} ${(prob * 100).toStringAsFixed(1)}%',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -201,9 +203,9 @@ class DiagnosticCertificateDialog extends StatelessWidget {
               const SizedBox(height: 14),
 
               // Milk Biomarkers Table
-              const Text(
-                'Milk Biomarkers',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              Text(
+                t.translate('milkBiomarkers'),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 6),
               Container(
@@ -213,24 +215,24 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildParameterRow('Somatic Cell Count', '${milkMeasurement.scc ~/ 1000}k /mL', milkMeasurement.isSccElevated),
+                    _buildParameterRow(t.translate('somaticCellCount'), '${milkMeasurement.scc ~/ 1000}k /mL', milkMeasurement.isSccElevated),
                     const Divider(height: 1, color: AppColors.border),
-                    _buildParameterRow('Conductivity', '${milkMeasurement.conductivity.toStringAsFixed(2)} mS/cm', milkMeasurement.isConductivityElevated),
+                    _buildParameterRow(t.translate('conductivityLabel'), '${milkMeasurement.conductivity.toStringAsFixed(2)} mS/cm', milkMeasurement.isConductivityElevated),
                     const Divider(height: 1, color: AppColors.border),
-                    _buildParameterRow('Milk pH', milkMeasurement.ph.toStringAsFixed(2), milkMeasurement.isPhAbnormal),
+                    _buildParameterRow(t.translate('milkPh'), milkMeasurement.ph.toStringAsFixed(2), milkMeasurement.isPhAbnormal),
                     const Divider(height: 1, color: AppColors.border),
-                    _buildParameterRow('Milk Temp', '${milkMeasurement.milkTemperature.toStringAsFixed(1)} °C', milkMeasurement.milkTemperature > 37.8),
+                    _buildParameterRow(t.translate('milkTemp'), '${milkMeasurement.milkTemperature.toStringAsFixed(1)} °C', milkMeasurement.milkTemperature > 37.8),
                     const Divider(height: 1, color: AppColors.border),
-                    _buildParameterRow('Fat / SNF', '${milkMeasurement.fat.toStringAsFixed(1)}% / ${milkMeasurement.snf.toStringAsFixed(1)}%', false),
+                    _buildParameterRow(t.translate('fatSnf'), '${milkMeasurement.fat.toStringAsFixed(1)}% / ${milkMeasurement.snf.toStringAsFixed(1)}%', false),
                   ],
                 ),
               ),
               const SizedBox(height: 14),
 
               // Factors
-              const Text(
-                'Diagnostic Factors',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              Text(
+                t.translate('diagnosticFactors'),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 6),
               ...result.factors.map(
@@ -253,9 +255,9 @@ class DiagnosticCertificateDialog extends StatelessWidget {
               const SizedBox(height: 14),
 
               // Recommended Clinical Action
-              const Text(
-                'Veterinary Recommendation',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              Text(
+                t.translate('veterinaryRecommendation'),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 6),
               Container(
@@ -282,7 +284,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.copy_rounded, size: 15),
-                      label: const Text('Copy Summary', style: TextStyle(fontSize: 11)),
+                      label: Text(t.translate('copySummary'), style: const TextStyle(fontSize: 11)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: const BorderSide(color: AppColors.primary),
@@ -298,10 +300,10 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Clinical summary copied to clipboard!'),
+                            SnackBar(
+                              content: Text(t.translate('clinicalSummaryCopied')),
                               backgroundColor: AppColors.success,
-                              duration: Duration(seconds: 2),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         }
@@ -317,7 +319,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Done', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                      child: Text(t.translate('done'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],

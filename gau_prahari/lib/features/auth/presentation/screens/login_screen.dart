@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -48,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -91,18 +92,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'Sign In',
-                            style: TextStyle(
+                          Text(
+                            t.translate('signIn'),
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            'Access your field telemetry and milk diagnostics',
-                            style: TextStyle(
+                          Text(
+                            t.translate('signInSubtitle'),
+                            style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
@@ -112,11 +113,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Identifier Field
                           CustomTextField(
                             controller: _identifierController,
-                            label: 'Email or ID',
-                            hint: 'e.g., vet@gauprahari.org',
+                            label: t.translate('emailOrId'),
+                            hint: t.translate('emailHint'),
                             prefixIcon: Icons.badge_outlined,
                             keyboardType: TextInputType.emailAddress,
-                            validator: Validators.validateIdentifier,
+                            validator: (value) => Validators.validateIdentifier(value, context),
                             textInputAction: TextInputAction.next,
                           ),
                           const SizedBox(height: 16),
@@ -124,11 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Password Field
                           CustomTextField(
                             controller: _passwordController,
-                            label: 'Password',
-                            hint: 'Enter your password',
+                            label: t.translate('password'),
+                            hint: t.translate('passwordHint'),
                             prefixIcon: Icons.lock_outline,
                             obscureText: _obscurePassword,
-                            validator: Validators.validatePassword,
+                            validator: (value) => Validators.validatePassword(value, context),
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _handleLogin(),
                             suffixIcon: IconButton(
@@ -150,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Submit Button
                           CustomButton(
-                            text: 'Sign In to Gau-Prahari',
+                            text: t.translate('signInButton'),
                             icon: Icons.login_rounded,
                             isLoading: authController.isLoading,
                             onPressed: _handleLogin,
@@ -165,10 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     // Footer
-                    const Text(
-                      'Smart India Hackathon • SIH26109\nTeam HealX',
+                    Text(
+                      t.translate('footerText'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textMuted,
                         height: 1.4,
@@ -185,6 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildHeader() {
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         Container(
@@ -204,9 +206,9 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          AppConstants.appName,
-          style: TextStyle(
+        Text(
+          t.translate('appName'),
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
@@ -214,10 +216,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
-          AppConstants.appSubtitle,
+        Text(
+          t.translate('appSubtitle'),
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
@@ -255,6 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildDemoChips() {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -266,13 +269,13 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.bolt_rounded, size: 16, color: AppColors.secondary),
-              SizedBox(width: 6),
+            children: [
+              const Icon(Icons.bolt_rounded, size: 16, color: AppColors.secondary),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Quick Demo Logins (Tap to prefill)',
-                  style: TextStyle(
+                  t.translate('quickDemoLogins'),
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
@@ -287,17 +290,17 @@ class _LoginScreenState extends State<LoginScreen> {
             runSpacing: 8,
             children: [
               _demoChip(
-                label: 'Field Vet',
+                label: t.translate('fieldVet'),
                 email: 'vet@gauprahari.org',
                 pass: 'vet123',
               ),
               _demoChip(
-                label: 'Farm Supervisor',
+                label: t.translate('farmSupervisor'),
                 email: 'farmer@gauprahari.org',
                 pass: 'farmer123',
               ),
               _demoChip(
-                label: 'Evaluator',
+                label: t.translate('evaluator'),
                 email: 'admin@gauprahari.org',
                 pass: 'admin123',
               ),

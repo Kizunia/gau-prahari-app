@@ -1,10 +1,10 @@
 /// Global constants for Gau-Prahari application.
+///
+/// User-facing translatable strings (appName, appSubtitle, appVersion)
+/// have been moved to the JSON localization files under assets/lang/.
+/// Use `AppLocalizations.of(context).translate('appName')` instead.
 class AppConstants {
   AppConstants._();
-
-  static const String appName = 'Gau-Prahari';
-  static const String appSubtitle = 'Early Bovine Mastitis Forecasting';
-  static const String appVersion = 'v1.0.0 (Round II)';
 
   // Backend configuration (configurable for local dev vs production)
   static const String defaultApiBaseUrl = 'http://10.0.2.2:8000'; // Android emulator to host

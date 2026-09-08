@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gau_prahari/core/constants/app_constants.dart';
+import 'package:gau_prahari/core/localization/locale_controller.dart';
 import 'package:gau_prahari/features/auth/domain/entities/user.dart';
 import 'package:gau_prahari/features/auth/domain/repositories/auth_repository.dart';
 import 'package:gau_prahari/features/auth/presentation/controllers/auth_controller.dart';
@@ -55,13 +55,14 @@ void main() {
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
+    final localeController = LocaleController();
 
-    await tester.pumpWidget(GauPrahariApp(authController: authController));
+    await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
-    // Verify brand header and login elements appear
-    expect(find.text(AppConstants.appName), findsOneWidget);
-    expect(find.text(AppConstants.appSubtitle), findsOneWidget);
+    // Verify brand header and login elements appear (English locale)
+    expect(find.text('Gau-Prahari'), findsOneWidget);
+    expect(find.text('Early Bovine Mastitis Forecasting'), findsOneWidget);
     expect(find.text('Sign In'), findsOneWidget);
     expect(find.text('Sign In to Gau-Prahari'), findsOneWidget);
     expect(find.text('Quick Demo Logins (Tap to prefill)'), findsOneWidget);
@@ -75,8 +76,9 @@ void main() {
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
+    final localeController = LocaleController();
 
-    await tester.pumpWidget(GauPrahariApp(authController: authController));
+    await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
     // Tap the 'Field Vet' demo chip
@@ -97,8 +99,9 @@ void main() {
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
+    final localeController = LocaleController();
 
-    await tester.pumpWidget(GauPrahariApp(authController: authController));
+    await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
     // Tap login button with empty fields
@@ -120,8 +123,9 @@ void main() {
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
+    final localeController = LocaleController();
 
-    await tester.pumpWidget(GauPrahariApp(authController: authController));
+    await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
     // Tap demo chip to fill fields

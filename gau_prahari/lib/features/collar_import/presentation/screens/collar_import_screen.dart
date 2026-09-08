@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gau_prahari/core/constants/app_colors.dart';
 import 'package:gau_prahari/shared/widgets/custom_button.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../milk_tester/presentation/screens/milk_tester_screen.dart';
 import '../../data/repositories/file_collar_data_provider.dart';
@@ -18,6 +19,7 @@ class CollarImportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return ChangeNotifierProvider(
       create: (_) => CollarImportController(
         provider: FileCollarDataProvider(),
@@ -25,10 +27,10 @@ class CollarImportScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const FittedBox(
+          title: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text('Smart Collar History'),
+            child: Text(t.translate('smartCollarHistory')),
           ),
           actions: [
             Container(
@@ -72,6 +74,7 @@ class _CollarImportView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final controller = context.watch<CollarImportController>();
     final history = controller.history;
 
@@ -80,7 +83,7 @@ class _CollarImportView extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           // Animal & Purpose Header
-          _buildInfoCard(),
+          _buildInfoCard(context),
           const SizedBox(height: 16),
 
           // Demo Datasets Selector
@@ -106,15 +109,15 @@ class _CollarImportView extends StatelessWidget {
           else if (history != null)
             _buildTelemetrySummary(context, history, controller.sourceName)
           else
-            _buildEmptyState(),
+            _buildEmptyState(context),
 
           const SizedBox(height: 24),
 
           // Navigation Button
           CustomButton(
             text: history != null
-                ? 'Continue to Milk Tester'
-                : 'Skip to Milk Tester (No Collar Data)',
+                ? t.translate('continueToMilkTester')
+                : t.translate('skipToMilkTester'),
             icon: Icons.arrow_forward_rounded,
             backgroundColor: history != null ? AppColors.primary : AppColors.secondary,
             onPressed: () {
@@ -133,7 +136,8 @@ class _CollarImportView extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -145,13 +149,13 @@ class _CollarImportView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.history_rounded, size: 20, color: AppColors.primary),
-              SizedBox(width: 8),
+            children: [
+              const Icon(Icons.history_rounded, size: 20, color: AppColors.primary),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Longitudinal Animal Telemetry',
-                  style: TextStyle(
+                  t.translate('longitudinalAnimalTelemetry'),
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -162,7 +166,7 @@ class _CollarImportView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Collar telemetry tracks 14-day behavioural activity, skin temperature, and ambient Temperature-Humidity Index (THI) for ${cow.id}.',
+            t.translate('collarTelemetryDescription', args: {'cowId': cow.id}),
             style: const TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
@@ -178,6 +182,7 @@ class _CollarImportView extends StatelessWidget {
     BuildContext context,
     CollarImportController controller,
   ) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -189,13 +194,13 @@ class _CollarImportView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.folder_zip_rounded, size: 16, color: AppColors.secondary),
-              SizedBox(width: 6),
+            children: [
+              const Icon(Icons.folder_zip_rounded, size: 16, color: AppColors.secondary),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Select Telemetry File to Import',
-                  style: TextStyle(
+                  t.translate('selectTelemetryFile'),
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -210,7 +215,7 @@ class _CollarImportView extends StatelessWidget {
             runSpacing: 8,
             children: [
               _datasetChip(
-                label: 'COW-104 CSV (14 Days)',
+                label: t.translate('cow104Csv'),
                 icon: Icons.table_chart_outlined,
                 onTap: () => controller.loadFromAsset(
                   'assets/data/collar_cow_104.csv',
@@ -218,7 +223,7 @@ class _CollarImportView extends StatelessWidget {
                 ),
               ),
               _datasetChip(
-                label: 'COW-104 JSON Format',
+                label: t.translate('cow104Json'),
                 icon: Icons.data_object_rounded,
                 onTap: () => controller.loadFromAsset(
                   'assets/data/collar_cow_104.json',
@@ -226,7 +231,7 @@ class _CollarImportView extends StatelessWidget {
                 ),
               ),
               _datasetChip(
-                label: 'COW-101 (Mismatch Test)',
+                label: t.translate('cow101Mismatch'),
                 icon: Icons.warning_amber_rounded,
                 onTap: () => controller.loadFromAsset(
                   'assets/data/collar_cow_101.csv',
@@ -307,7 +312,8 @@ class _CollarImportView extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -316,22 +322,22 @@ class _CollarImportView extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
-        children: const [
-          Icon(Icons.file_upload_outlined, size: 48, color: AppColors.textMuted),
-          SizedBox(height: 12),
+        children: [
+          const Icon(Icons.file_upload_outlined, size: 48, color: AppColors.textMuted),
+          const SizedBox(height: 12),
           Text(
-            'No Telemetry File Loaded',
-            style: TextStyle(
+            t.translate('noTelemetryFileLoaded'),
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
-            'Choose a sample telemetry file above to parse and validate historical collar metrics.',
+            t.translate('noTelemetryFileDescription'),
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
             ),
@@ -346,6 +352,7 @@ class _CollarImportView extends StatelessWidget {
     CollarHistory history,
     String? sourceName,
   ) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -366,7 +373,7 @@ class _CollarImportView extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '${history.recordCount} Days Telemetry Imported',
+                        t.translate('daysTelemetryImported', args: {'count': history.recordCount.toString()}),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -406,7 +413,7 @@ class _CollarImportView extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatTile(
-                  label: 'Mean Activity',
+                  label: t.translate('meanActivity'),
                   value: '${history.meanActivity.toStringAsFixed(1)} / 100',
                   icon: Icons.directions_run_rounded,
                 ),
@@ -414,7 +421,7 @@ class _CollarImportView extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatTile(
-                  label: 'Mean Skin Temp',
+                  label: t.translate('meanSkinTemp'),
                   value: '${history.meanSkinTemperature.toStringAsFixed(1)} °C',
                   icon: Icons.thermostat_rounded,
                 ),
@@ -426,7 +433,7 @@ class _CollarImportView extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatTile(
-                  label: 'Mean THI Index',
+                  label: t.translate('meanThiIndex'),
                   value: history.meanThi.toStringAsFixed(1),
                   icon: Icons.wb_sunny_outlined,
                 ),
@@ -434,7 +441,7 @@ class _CollarImportView extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatTile(
-                  label: 'Mean Humidity',
+                  label: t.translate('meanHumidity'),
                   value: '${history.meanHumidity.toStringAsFixed(1)} %',
                   icon: Icons.water_drop_outlined,
                 ),
@@ -443,9 +450,9 @@ class _CollarImportView extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          const Text(
-            'Signal Channels Verified:',
-            style: TextStyle(
+          Text(
+            t.translate('signalChannelsVerified'),
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
@@ -456,11 +463,11 @@ class _CollarImportView extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _channelChip('Activity', true),
-              _channelChip('Skin Temperature', true),
-              _channelChip('Ambient Temperature', true),
-              _channelChip('Humidity', true),
-              _channelChip('THI Stress Index', true),
+              _channelChip(t.translate('activity'), true),
+              _channelChip(t.translate('skinTemperature'), true),
+              _channelChip(t.translate('ambientTemperature'), true),
+              _channelChip(t.translate('humidity'), true),
+              _channelChip(t.translate('thiStressIndex'), true),
             ],
           ),
         ],

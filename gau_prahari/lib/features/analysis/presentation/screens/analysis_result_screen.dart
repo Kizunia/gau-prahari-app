@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gau_prahari/core/constants/app_colors.dart';
 import 'package:gau_prahari/shared/widgets/custom_button.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../collar_import/domain/entities/collar_telemetry.dart';
 import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../cow_selection/presentation/screens/cow_selection_screen.dart';
@@ -38,17 +39,18 @@ class AnalysisResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const FittedBox(
+        title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text('Mastitis Risk Assessment'),
+          child: Text(t.translate('mastitisRiskAssessment')),
         ),
         actions: [
           IconButton(
-            tooltip: 'Share Report',
+            tooltip: t.translate('shareReport'),
             icon: const Icon(Icons.share_rounded, color: AppColors.primary),
             onPressed: () => _openShareOptions(context),
           ),
@@ -108,7 +110,7 @@ class AnalysisResultScreen extends StatelessWidget {
 
             // 6. Action: Share / Export Clinical Report
             CustomButton(
-              text: 'Share Clinical Report / WhatsApp',
+              text: t.translate('shareClinicReport'),
               icon: Icons.share_rounded,
               backgroundColor: const Color(0xFF1E7E34),
               onPressed: () => _openShareOptions(context),
@@ -117,7 +119,7 @@ class AnalysisResultScreen extends StatelessWidget {
 
             // 7. Action: Done & Select Next Animal
             CustomButton(
-              text: 'Done & Select Next Animal',
+              text: t.translate('doneSelectNext'),
               icon: Icons.check_circle_outline_rounded,
               backgroundColor: AppColors.primaryDark,
               onPressed: () {
@@ -134,6 +136,7 @@ class AnalysisResultScreen extends StatelessWidget {
   }
 
   Widget _buildRiskBanner(BuildContext context) {
+    final t = AppLocalizations.of(context);
     Color bannerBg;
     Color textColor;
     IconData icon;
@@ -144,20 +147,20 @@ class AnalysisResultScreen extends StatelessWidget {
       bannerBg = AppColors.errorLight;
       textColor = AppColors.error;
       icon = Icons.warning_rounded;
-      statusTitle = 'HIGH MASTITIS RISK';
-      statusSubtitle = 'Immediate isolation and clinical intervention recommended.';
+      statusTitle = t.translate('highMastitisRisk');
+      statusSubtitle = t.translate('highRiskSubtitle');
     } else if (result.isModerateRisk) {
       bannerBg = AppColors.warningLight;
       textColor = AppColors.warning;
       icon = Icons.info_rounded;
-      statusTitle = 'MODERATE RISK (SUBCLINICAL)';
-      statusSubtitle = 'Early inflammatory indicators detected in quarter milk.';
+      statusTitle = t.translate('moderateRisk');
+      statusSubtitle = t.translate('moderateRiskSubtitle');
     } else {
       bannerBg = AppColors.successLight;
       textColor = AppColors.success;
       icon = Icons.verified_user_rounded;
-      statusTitle = 'HEALTHY / LOW RISK';
-      statusSubtitle = 'Milk biomarkers within standard physiological baseline.';
+      statusTitle = t.translate('healthyLowRisk');
+      statusSubtitle = t.translate('healthyRiskSubtitle');
     }
 
     return Container(
@@ -205,6 +208,7 @@ class AnalysisResultScreen extends StatelessWidget {
   }
 
   Widget _buildProbabilityCard(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final prob = result.probability ?? 0.0;
     final percentage = (prob * 100).toInt();
 
@@ -230,10 +234,10 @@ class AnalysisResultScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'AI Model Risk Confidence',
-                  style: TextStyle(
+                  t.translate('aiModelRiskConfidence'),
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -267,6 +271,7 @@ class AnalysisResultScreen extends StatelessWidget {
   }
 
   Widget _buildKeyFactorsSection(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -277,14 +282,14 @@ class AnalysisResultScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.insights_rounded, color: AppColors.primary, size: 20),
-              SizedBox(width: 8),
+              const Icon(Icons.insights_rounded, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Key Diagnostic Drivers',
-                  style: TextStyle(
+                  t.translate('keyDiagnosticDrivers'),
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -295,9 +300,9 @@ class AnalysisResultScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           if (result.factors.isEmpty)
-            const Text(
-              'No abnormal biomarker variances detected.',
-              style: TextStyle(
+            Text(
+              t.translate('noAbnormalVariances'),
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 fontStyle: FontStyle.italic,
@@ -343,6 +348,7 @@ class AnalysisResultScreen extends StatelessWidget {
   }
 
   Widget _buildRecommendationCard(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -355,14 +361,14 @@ class AnalysisResultScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.medical_services_rounded, color: AppColors.primary, size: 20),
-              SizedBox(width: 8),
+              const Icon(Icons.medical_services_rounded, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Recommended Veterinary Action',
-                  style: TextStyle(
+                  t.translate('recommendedVeterinaryAction'),
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryDark,
@@ -387,6 +393,7 @@ class AnalysisResultScreen extends StatelessWidget {
   }
 
   Widget _buildParameterBreakdown(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -397,25 +404,25 @@ class AnalysisResultScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Raw Input Parameters Recorded',
-            style: TextStyle(
+          Text(
+            t.translate('rawInputParameters'),
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
-          _buildParamRow('Milk Temperature', '${milkMeasurement.milkTemperature.toStringAsFixed(1)} °C'),
-          _buildParamRow('pH Level', milkMeasurement.ph.toStringAsFixed(2)),
-          _buildParamRow('Electrical Conductivity', '${milkMeasurement.conductivity.toStringAsFixed(2)} mS/cm'),
-          _buildParamRow('Somatic Cell Count', '${milkMeasurement.scc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} cells/mL'),
-          _buildParamRow('Fat Content', '${milkMeasurement.fat.toStringAsFixed(1)} %'),
-          _buildParamRow('Solids-Not-Fat (SNF)', '${milkMeasurement.snf.toStringAsFixed(1)} %'),
+          _buildParamRow(t.translate('milkTemperature'), '${milkMeasurement.milkTemperature.toStringAsFixed(1)} °C'),
+          _buildParamRow(t.translate('phLevel'), milkMeasurement.ph.toStringAsFixed(2)),
+          _buildParamRow(t.translate('electricalConductivity'), '${milkMeasurement.conductivity.toStringAsFixed(2)} mS/cm'),
+          _buildParamRow(t.translate('somaticCellCount'), '${milkMeasurement.scc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} cells/mL'),
+          _buildParamRow(t.translate('fatContent'), '${milkMeasurement.fat.toStringAsFixed(1)} %'),
+          _buildParamRow(t.translate('snfContent'), '${milkMeasurement.snf.toStringAsFixed(1)} %'),
           if (collarHistory != null) ...[
             const Divider(height: 20, color: AppColors.border),
-            _buildParamRow('Collar Telemetry', '${collarHistory!.recordCount} Days attached'),
-            _buildParamRow('Collar Mean THI', collarHistory!.meanThi.toStringAsFixed(1)),
+            _buildParamRow(t.translate('collarTelemetry'), t.translate('daysAttached', args: {'count': collarHistory!.recordCount.toString()})),
+            _buildParamRow(t.translate('collarMeanThi'), collarHistory!.meanThi.toStringAsFixed(1)),
           ],
         ],
       ),
