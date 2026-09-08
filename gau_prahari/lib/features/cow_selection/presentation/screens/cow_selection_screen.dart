@@ -6,6 +6,7 @@ import 'package:gau_prahari/features/collar_import/presentation/screens/collar_i
 import 'package:gau_prahari/features/cow_selection/domain/entities/cow.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../shared/widgets/language_selector.dart';
+import 'qr_scanner_screen.dart';
 
 class CowSelectionScreen extends StatelessWidget {
   const CowSelectionScreen({super.key});
@@ -21,6 +22,15 @@ class CowSelectionScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(t.translate('appName')),
         actions: [
+          IconButton(
+            tooltip: t.translate('scanQrCode'),
+            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+              );
+            },
+          ),
           const LanguageSelector(),
           const SizedBox(width: 8),
           IconButton(
@@ -58,6 +68,80 @@ class CowSelectionScreen extends StatelessWidget {
           children: [
             // User status card
             if (user != null) _buildUserCard(user),
+            const SizedBox(height: 16),
+
+            // Scan QR Ear Tag Action Card
+            InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.translate('scanQrCode'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            t.translate('scanQrPrompt'),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Section Header
@@ -163,6 +247,17 @@ class CowSelectionScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.qr_code_scanner_rounded),
+        label: Text(t.translate('scanQrCode')),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+          );
+        },
       ),
     );
   }

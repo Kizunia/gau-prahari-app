@@ -164,5 +164,15 @@
   "language": "भाषा",
   "english": "English",
   "hindi": "हिन्दी",
-  "marathi": "मराठी"
+  "marathi": "मराठी",
+
+  "scanQrCode": "कान टॅग QR स्कॅन करा",
+  "scanQrPrompt": "कॅमेरा पशूच्या QR कान टॅग किंवा स्टॉल बॅजवर धरा",
+  "cowFetchedSuccess": "पशू {cowId} चा डेटा यशस्वीरित्या प्राप्त झाला!",
+  "cowNotFound": "डेटाबेसमध्ये गाय {cowId} सापडली नाही",
+  "invalidQrFormat": "अवैध QR कोड स्वरूप. कृपया वैध गौ-प्रहरी जनावरांचा टॅग स्कॅन करा.",
+  "simulateScan": "डेमो स्कॅन",
+  "flash": "फ्लॅश",
+  "switchCamera": "कॅमेरा बदला",
+  "orScanManual": "जलद डेमो चाचणी (स्कॅन सिम्युलेट करण्यासाठी टॅप करा):"
 }

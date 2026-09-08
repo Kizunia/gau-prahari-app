@@ -164,5 +164,15 @@
   "language": "Language",
   "english": "English",
   "hindi": "हिन्दी",
-  "marathi": "मराठी"
+  "marathi": "मराठी",
+
+  "scanQrCode": "Scan Ear Tag QR",
+  "scanQrPrompt": "Point camera at animal's QR ear tag or stall badge",
+  "cowFetchedSuccess": "Animal {cowId} fetched successfully!",
+  "cowNotFound": "Cow {cowId} not found in database",
+  "invalidQrFormat": "Invalid QR code format. Please scan a valid Gau-Prahari cattle tag.",
+  "simulateScan": "Demo Scan",
+  "flash": "Flash",
+  "switchCamera": "Flip",
+  "orScanManual": "Quick Demo Test (Tap to simulate scan):"
 }
