@@ -10,10 +10,10 @@ class AiConfig {
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY_HERE';
 
   /// Primary Gemini model ID.
-  static const String defaultModel = 'gemini-3-flash-preview';
+  static const String defaultModel = 'gemini-3.5-flash';
 
   /// Secondary fallback model in case of quota or model availability issues.
-  static const String fallbackModel = 'gemini-3.5-flash';
+  static const String fallbackModel = 'gemini-2.5-flash-lite';
 
   /// Request timeout in seconds.
   static const int requestTimeoutSeconds = 15;

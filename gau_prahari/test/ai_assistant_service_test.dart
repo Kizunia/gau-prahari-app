@@ -87,7 +87,11 @@ void main() {
             },
           ],
         };
-        return http.Response(jsonEncode(geminiResponse), 200);
+        return http.Response.bytes(
+          utf8.encode(jsonEncode(geminiResponse)),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       });
 
       final service = AiAssistantService(httpClient: fakeClient);
@@ -124,7 +128,11 @@ void main() {
             },
           ],
         };
-        return http.Response(jsonEncode(geminiResponse), 200);
+        return http.Response.bytes(
+          utf8.encode(jsonEncode(geminiResponse)),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       });
 
       final service = AiAssistantService(httpClient: fakeClient);
@@ -180,7 +188,11 @@ void main() {
             },
           ],
         };
-        return http.Response(jsonEncode(geminiResponse), 200);
+        return http.Response.bytes(
+          utf8.encode(jsonEncode(geminiResponse)),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       });
 
       final service = AiAssistantService(httpClient: fakeClient);
@@ -199,6 +211,55 @@ void main() {
       expect(sysInstruction, contains('CURRENT APPLICATION SCREEN CONTEXT'));
       expect(sysInstruction, contains('COW-104'));
       expect(sysInstruction, contains('MODERATE'));
+    });
+
+    test('Instructs model to provide general purpose cattle disease and farming answers uncoupled from app pitch', () async {
+      await AiAssistantService.setApiKey('test_fake_api_key_123');
+
+      late Map<String, dynamic> sentPayload;
+      final fakeClient = FakeHttpClient((req) async {
+        sentPayload = jsonDecode(req.body) as Map<String, dynamic>;
+        final geminiResponse = {
+          'candidates': [
+            {
+              'content': {
+                'role': 'model',
+                'parts': [
+                  {
+                    'text':
+                        'गायींमध्ये लाळ-खुरकूत, लंपी त्वचा रोग, आणि स्तनदाह हे प्रमुख आजार आढळतात.',
+                  },
+                ],
+              },
+            },
+          ],
+        };
+        return http.Response.bytes(
+          utf8.encode(jsonEncode(geminiResponse)),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+
+      final service = AiAssistantService(httpClient: fakeClient);
+      final reply = await service.respond(
+        query: 'मला गाईच्या आजाराबद्दल माहिती हवी आहे',
+        languageCode: 'mr',
+      );
+
+      expect(reply, contains('गायींमध्ये'));
+      final sysInstruction =
+          sentPayload['systemInstruction']['parts'][0]['text'] as String;
+      expect(sysInstruction, contains('FULL GENERAL-PURPOSE KNOWLEDGE'));
+      expect(
+        sysInstruction,
+        contains('NOT limited or tightly coupled only to the Gau-Prahari app'),
+      );
+      expect(sysInstruction, contains('Cattle Health & Diseases'));
+      final generationConfig =
+          sentPayload['generationConfig'] as Map<String, dynamic>;
+      expect(generationConfig['maxOutputTokens'], 1024);
+      expect(generationConfig['thinkingConfig']['thinkingLevel'], 'low');
     });
 
     test('Retries with fallback model when primary model returns 404', () async {
@@ -224,7 +285,11 @@ void main() {
               },
             ],
           };
-          return http.Response(jsonEncode(geminiResponse), 200);
+          return http.Response.bytes(
+          utf8.encode(jsonEncode(geminiResponse)),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
         }
       });
 

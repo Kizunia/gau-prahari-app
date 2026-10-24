@@ -525,8 +525,13 @@ class VoiceAssistantController extends ChangeNotifier {
         }
       }
 
+      final spokenText = replyText
+          .replaceAll(RegExp(r'\*\*|\*|#+'), '')
+          .replaceAll(RegExp(r'^\s*[-•]\s*', multiLine: true), '')
+          .trim();
+
       await _speechOutputService.speak(
-        replyText,
+        spokenText,
         languageCode: ttsLang,
         onDone: () {
           if (_sessionToken == sessionToken) {
