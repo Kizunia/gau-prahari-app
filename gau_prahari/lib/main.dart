@@ -17,6 +17,8 @@ import 'features/vet_review/data/repositories/firestore_vet_review_repository.da
 import 'features/vet_review/data/repositories/local_draft_repository.dart';
 import 'features/vet_review/domain/repositories/vet_review_repository.dart';
 import 'features/vet_review/presentation/screens/veterinarian_dashboard_screen.dart';
+import 'features/appointment_booking/data/repositories/firestore_appointment_repository.dart';
+import 'features/appointment_booking/domain/repositories/appointment_repository.dart';
 import 'features/voice_assistant/data/repositories/conversation_repository_impl.dart';
 import 'features/voice_assistant/data/services/speech_output_service_impl.dart';
 import 'features/voice_assistant/data/services/speech_recognition_service_impl.dart';
@@ -57,6 +59,7 @@ class GauPrahariApp extends StatelessWidget {
   final VoiceAssistantController? voiceAssistantController;
   final VetReviewRepository? vetReviewRepository;
   final LocalDraftRepository? localDraftRepository;
+  final AppointmentRepository? appointmentRepository;
 
   const GauPrahariApp({
     super.key,
@@ -66,6 +69,7 @@ class GauPrahariApp extends StatelessWidget {
     this.voiceAssistantController,
     this.vetReviewRepository,
     this.localDraftRepository,
+    this.appointmentRepository,
   });
 
   @override
@@ -98,6 +102,14 @@ class GauPrahariApp extends StatelessWidget {
         Provider<LocalDraftRepository>(
           create: (_) =>
               localDraftRepository ?? LocalDraftRepository(),
+        ),
+        Provider<AppointmentRepository>(
+          create: (context) {
+            final auth = context.read<AuthController>();
+            final isDemo = auth.currentUser?.isDemo == true;
+            return appointmentRepository ??
+                FirestoreAppointmentRepository(isDemo: isDemo);
+          },
         ),
       ],
       child: Consumer<LocaleController>(

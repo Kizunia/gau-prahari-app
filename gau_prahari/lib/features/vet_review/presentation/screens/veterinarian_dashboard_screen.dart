@@ -7,6 +7,9 @@ import '../../domain/entities/review_status.dart';
 import '../../domain/repositories/vet_review_repository.dart';
 import '../widgets/review_request_card.dart';
 import 'veterinarian_review_detail_screen.dart';
+import '../../../appointment_booking/presentation/screens/veterinarian_appointments_screen.dart';
+import '../../../appointment_booking/presentation/screens/veterinarian_availability_screen.dart';
+
 
 /// Dashboard screen for authenticated veterinarians displaying assigned review requests.
 class VeterinarianDashboardScreen extends StatefulWidget {
@@ -74,6 +77,28 @@ class _VeterinarianDashboardScreenState
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.event_note_rounded, color: AppColors.primary),
+            tooltip: 'Appointments',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const VeterinarianAppointmentsScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.tune_rounded, color: AppColors.primary),
+            tooltip: 'Availability',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const VeterinarianAvailabilityScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Sign Out',

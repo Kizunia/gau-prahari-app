@@ -90,5 +90,94 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    // 4. Veterinarian Schedules collection (SRS 6.2 & 7.1)
+    match /veterinarianSchedules/{vetUid} {
+      // Any authenticated user can read schedules (for directory & availability)
+      allow read: if isAuthenticated();
+
+      // Only the authenticated veterinarian who owns the schedule may create or update it
+      allow create, update: if isOwner(vetUid)
+                            && request.resource.data.veterinarianUid == vetUid;
+
+      // Deletion is forbidden
+      allow delete: if false;
+    }
+
+    // 5. Appointment Slots collection (SRS 6.3 & 7.2)
+    match /appointmentSlots/{slotId} {
+      // Authenticated users can read slots to view availability
+      allow read: if isAuthenticated();
+
+      // Only the assigned veterinarian may create/publish slots
+      allow create: if isAuthenticated()
+                    && isOwner(request.resource.data.veterinarianUid)
+                    && (request.resource.data.status == 'available' || request.resource.data.status == 'blocked');
+
+      // Slot updates:
+      // a) Assigned veterinarian can update/block their slots (cannot overwrite booked)
+      // b) Authenticated farmer can reserve an available slot (status: 'available' -> 'booked')
+      // c) Participant cancelling can restore slot to 'available'
+      allow update: if isAuthenticated() && (
+        // Case a: Veterinarian managing their slot
+        (isOwner(resource.data.veterinarianUid)
+          && request.resource.data.veterinarianUid == resource.data.veterinarianUid
+          && (resource.data.status != 'booked' || request.resource.data.status == 'booked'))
+        ||
+        // Case b: Atomic booking by farmer (available -> booked)
+        (resource.data.status == 'available'
+          && request.resource.data.status == 'booked'
+          && request.resource.data.veterinarianUid == resource.data.veterinarianUid)
+        ||
+        // Case c: Release slot back on cancellation (booked -> available)
+        (resource.data.status == 'booked'
+          && request.resource.data.status == 'available'
+          && request.resource.data.veterinarianUid == resource.data.veterinarianUid)
+      );
+
+      // Slots cannot be deleted
+      allow delete: if false;
+    }
+
+    // 6. Appointments collection (SRS 6.4 & 7.3)
+    match /appointments/{appointmentId} {
+      // Private: Only the farmer and assigned veterinarian may read
+      allow read: if isAuthenticated() && (
+        resource.data.farmerUid == request.auth.uid ||
+        resource.data.veterinarianUid == request.auth.uid
+      );
+
+      // Create: Authenticated farmer booking a slot
+      allow create: if isAuthenticated()
+                    && request.resource.data.farmerUid == request.auth.uid
+                    && request.resource.data.status == 'booked'
+                    && request.resource.data.slotId is string
+                    && request.resource.data.veterinarianUid is string;
+
+      // Update:
+      // - Immutable fields: farmerUid, veterinarianUid, slotId, startAt, endAt, createdAt MUST NOT CHANGE
+      // - Participant cancellation: status becomes 'cancelled', sets cancelledByUid
+      // - Assigned veterinarian completion: status becomes 'completed'
+      allow update: if isAuthenticated()
+                    // Participant check
+                    && (resource.data.farmerUid == request.auth.uid || resource.data.veterinarianUid == request.auth.uid)
+                    // Immutability checks
+                    && request.resource.data.farmerUid == resource.data.farmerUid
+                    && request.resource.data.veterinarianUid == resource.data.veterinarianUid
+                    && request.resource.data.slotId == resource.data.slotId
+                    && request.resource.data.startAt == resource.data.startAt
+                    && request.resource.data.endAt == resource.data.endAt
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    // Terminal status checks
+                    && (resource.data.status != 'cancelled' || request.resource.data.status == 'cancelled')
+                    && (resource.data.status != 'completed' || request.resource.data.status == 'completed')
+                    // Only assigned veterinarian can complete
+                    && (request.resource.data.status != 'completed' || resource.data.veterinarianUid == request.auth.uid)
+                    // Cancellation permitted by either participant
+                    && (request.resource.data.status != 'cancelled' || request.resource.data.cancelledByUid == request.auth.uid);
+
+      // Deletion is forbidden to preserve medical audit trail
+      allow delete: if false;
+    }
   }
 }

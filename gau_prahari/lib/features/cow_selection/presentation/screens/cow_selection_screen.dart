@@ -11,6 +11,9 @@ import '../../../../shared/widgets/language_selector.dart';
 import '../../../voice_assistant/presentation/widgets/voice_assistant_button.dart';
 import 'qr_scanner_screen.dart';
 import '../../../vet_review/presentation/screens/farmer_review_requests_screen.dart';
+import '../../../appointment_booking/presentation/screens/veterinarian_directory_screen.dart';
+import '../../../appointment_booking/presentation/screens/farmer_appointments_screen.dart';
+
 
 class CowSelectionScreen extends StatefulWidget {
   const CowSelectionScreen({super.key});
@@ -109,6 +112,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                   // User status card
                   if (user != null) _buildUserCard(user),
                   const SizedBox(height: 16),
+
 
                   // Scan QR Ear Tag Action Card
                   InkWell(
@@ -247,6 +251,10 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
 
                   const SizedBox(height: 24),
 
+                  // Veterinary Consultations & Appointments Quick Action Card
+                  _buildVeterinaryCareCard(context),
+                  const SizedBox(height: 16),
+
                   // Pipeline info indicator
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -306,6 +314,99 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
               );
             },
             child: const Icon(Icons.qr_code_scanner_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVeterinaryCareCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.medical_services_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Veterinary Consultations',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const VeterinarianDirectoryScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                  label: const Text(
+                    'Book Vet',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FarmerAppointmentsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.event_note_rounded, size: 16),
+                  label: const Text(
+                    'Appointments',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.secondary,
+                    side: const BorderSide(color: AppColors.secondary),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
