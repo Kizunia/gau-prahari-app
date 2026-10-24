@@ -40,10 +40,15 @@ dependencies:
   shared_preferences: ^2.3.2
   http: ^1.2.2
   mobile_scanner: ^7.4.0
+  sqflite: ^2.4.5
+  path: ^1.9.1
+  speech_to_text: ^7.5.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  sqflite_common_ffi: ^2.4.5
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

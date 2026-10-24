@@ -44,7 +44,8 @@ class FileCollarDataProvider implements CollarDataProvider {
       }
 
       final fileCowId = decoded['cow_id'] as String? ?? '';
-      if (fileCowId.trim().toUpperCase() != expectedCowId.trim().toUpperCase()) {
+      if (fileCowId.trim().toUpperCase() !=
+          expectedCowId.trim().toUpperCase()) {
         throw Exception(
           'Cow ID mismatch: File contains data for "$fileCowId", but selected cow is "$expectedCowId".',
         );
@@ -52,7 +53,9 @@ class FileCollarDataProvider implements CollarDataProvider {
 
       final recordsList = decoded['records'];
       if (recordsList is! List || recordsList.isEmpty) {
-        throw Exception('JSON file contains no telemetry records in "records" array.');
+        throw Exception(
+          'JSON file contains no telemetry records in "records" array.',
+        );
       }
 
       final telemetryList = <CollarTelemetry>[];
@@ -64,10 +67,7 @@ class FileCollarDataProvider implements CollarDataProvider {
         telemetryList.add(CollarTelemetry.fromJson(recordMap));
       }
 
-      return CollarHistory(
-        cowId: expectedCowId,
-        records: telemetryList,
-      );
+      return CollarHistory(cowId: expectedCowId, records: telemetryList);
     } catch (e) {
       if (e is Exception) rethrow;
       throw Exception('JSON parse error: $e');
@@ -82,7 +82,9 @@ class FileCollarDataProvider implements CollarDataProvider {
         .toList();
 
     if (lines.length < 2) {
-      throw Exception('CSV file must contain a header line and at least one data record.');
+      throw Exception(
+        'CSV file must contain a header line and at least one data record.',
+      );
     }
 
     // Parse header
@@ -95,7 +97,9 @@ class FileCollarDataProvider implements CollarDataProvider {
     int findCol(String name) {
       final idx = header.indexOf(name);
       if (idx == -1) {
-        throw Exception('Missing required CSV header column: "$name". Found: ${header.join(", ")}');
+        throw Exception(
+          'Missing required CSV header column: "$name". Found: ${header.join(", ")}',
+        );
       }
       return idx;
     }
@@ -131,13 +135,17 @@ class FileCollarDataProvider implements CollarDataProvider {
       try {
         timestamp = DateTime.parse(parts[timestampIdx]);
       } catch (_) {
-        throw Exception('Invalid ISO 8601 timestamp at row ${lineNum + 1}: "${parts[timestampIdx]}"');
+        throw Exception(
+          'Invalid ISO 8601 timestamp at row ${lineNum + 1}: "${parts[timestampIdx]}"',
+        );
       }
 
       double parseNum(int idx, String fieldName) {
         final val = double.tryParse(parts[idx]);
         if (val == null) {
-          throw Exception('Invalid numeric value for $fieldName at row ${lineNum + 1}: "${parts[idx]}"');
+          throw Exception(
+            'Invalid numeric value for $fieldName at row ${lineNum + 1}: "${parts[idx]}"',
+          );
         }
         return val;
       }
@@ -160,9 +168,6 @@ class FileCollarDataProvider implements CollarDataProvider {
       );
     }
 
-    return CollarHistory(
-      cowId: expectedCowId,
-      records: telemetryList,
-    );
+    return CollarHistory(cowId: expectedCowId, records: telemetryList);
   }
 }

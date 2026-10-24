@@ -12,6 +12,12 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/cow_selection/data/repositories/cow_repository_impl.dart';
 import 'features/cow_selection/presentation/controllers/cow_controller.dart';
 import 'features/cow_selection/presentation/screens/cow_selection_screen.dart';
+import 'features/voice_assistant/data/repositories/conversation_repository_impl.dart';
+import 'features/voice_assistant/data/services/speech_output_service_impl.dart';
+import 'features/voice_assistant/data/services/speech_recognition_service_impl.dart';
+import 'features/voice_assistant/data/services/temporary_local_responder.dart';
+import 'features/voice_assistant/domain/repositories/conversation_repository.dart';
+import 'features/voice_assistant/presentation/controllers/voice_assistant_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,12 +46,14 @@ class GauPrahariApp extends StatelessWidget {
   final AuthController authController;
   final LocaleController localeController;
   final CowController? cowController;
+  final VoiceAssistantController? voiceAssistantController;
 
   const GauPrahariApp({
     super.key,
     required this.authController,
     required this.localeController,
     this.cowController,
+    this.voiceAssistantController,
   });
 
   @override
@@ -55,7 +63,21 @@ class GauPrahariApp extends StatelessWidget {
         ChangeNotifierProvider<AuthController>.value(value: authController),
         ChangeNotifierProvider<LocaleController>.value(value: localeController),
         ChangeNotifierProvider<CowController>(
-          create: (_) => cowController ?? CowController(repository: CowRepositoryImpl()),
+          create: (_) =>
+              cowController ?? CowController(repository: CowRepositoryImpl()),
+        ),
+        Provider<ConversationRepository>(
+          create: (_) => ConversationRepositoryImpl(),
+        ),
+        ChangeNotifierProvider<VoiceAssistantController>(
+          create: (context) =>
+              voiceAssistantController ??
+              VoiceAssistantController(
+                conversationRepository: context.read<ConversationRepository>(),
+                speechRecognitionService: SpeechRecognitionServiceImpl(),
+                speechOutputService: SpeechOutputServiceImpl(),
+                responder: const TemporaryLocalResponder(),
+              ),
         ),
       ],
       child: Consumer<LocaleController>(

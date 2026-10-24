@@ -24,8 +24,8 @@ class HardwareMilkTester implements MilkDataProvider {
     ArduinoDataParser? parser,
     this.connectionDelay = const Duration(milliseconds: 10),
     this.measurementDelay = const Duration(milliseconds: 10),
-  })  : _bluetoothService = bluetoothService ?? const NativeBluetoothService(),
-        _parser = parser ?? const ArduinoDataParser();
+  }) : _bluetoothService = bluetoothService ?? const NativeBluetoothService(),
+       _parser = parser ?? const ArduinoDataParser();
 
   @override
   MilkTestingState get state => _state;
@@ -58,7 +58,10 @@ class HardwareMilkTester implements MilkDataProvider {
         _setState(MilkTestingState.measuring);
         await Future.delayed(const Duration(milliseconds: 10));
 
-        final parsed = _parser.parse(rawData: _customStreamPacket!, cowId: cowId);
+        final parsed = _parser.parse(
+          rawData: _customStreamPacket!,
+          cowId: cowId,
+        );
         _latestMetadata = parsed.metadata;
         _setState(MilkTestingState.completed);
         return parsed.measurement;
@@ -89,12 +92,15 @@ class HardwareMilkTester implements MilkDataProvider {
                 name.contains('GAU') ||
                 name.contains('ARDUINO');
           },
-          orElse: () => pairedDevices.first, // fallback to first paired device if name differs
+          orElse: () => pairedDevices
+              .first, // fallback to first paired device if name differs
         );
 
         final address = hc05['address'] ?? '';
         if (address.isEmpty) {
-          throw Exception('Invalid Bluetooth address for device: ${hc05['name']}');
+          throw Exception(
+            'Invalid Bluetooth address for device: ${hc05['name']}',
+          );
         }
 
         // 2. Connect RFCOMM Socket to HC-05

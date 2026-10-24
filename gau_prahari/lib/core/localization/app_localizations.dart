@@ -18,7 +18,10 @@ class AppLocalizations {
 
   /// Convenience accessor from any widget BuildContext.
   static AppLocalizations of(BuildContext context) {
-    final instance = Localizations.of<AppLocalizations>(context, AppLocalizations);
+    final instance = Localizations.of<AppLocalizations>(
+      context,
+      AppLocalizations,
+    );
     if (instance != null) return instance;
     final fallback = AppLocalizations(const Locale('en'));
     fallback._localizedStrings = {};

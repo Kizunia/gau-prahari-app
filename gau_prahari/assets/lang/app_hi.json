@@ -200,5 +200,26 @@
   "ageLabel": "आयु (वर्ष)",
   "lactationStageLabel": "दुग्ध अवस्था",
   "cowIdRequired": "गाय आईडी आवश्यक है",
-  "editCow": "गाय संपादित करें"
+  "editCow": "गाय संपादित करें",
+
+  "voiceAssistant": "वॉयस असिस्टेंट",
+  "newConversation": "नई बातचीत",
+  "conversationHistory": "बातचीत का इतिहास",
+  "noConversationsYet": "कोई पुरानी बातचीत नहीं है",
+  "deleteConversationTitle": "बातचीत हटाएं",
+  "deleteConversationConfirm": "क्या आप वाकई इस बातचीत को हटाना चाहते हैं?",
+  "delete": "हटाएं",
+  "permissionDenied": "वॉयस असिस्टेंट का उपयोग करने के लिए माइक्रोफ़ोन की अनुमति आवश्यक है।",
+  "noSpeechDetected": "कोई आवाज़ नहीं मिली। कृपया दोबारा कोशिश करें।",
+  "speechError": "आवाज़ पहचानने में त्रुटि हुई। कृपया पुनः प्रयास करें।",
+  "languageNotSupported": "चुनी हुई भाषा आपके डिवाइस पर समर्थित नहीं है।",
+  "assistantWelcomeTitle": "गौ-प्रहरी वॉयस असिस्टेंट",
+  "assistantWelcomeSubtitle": "माइक दबाएं और अपनी चुनी हुई भाषा में अपना प्रश्न पूछें।",
+  "listeningState": "सुन रहा है...",
+  "processingState": "सोच रहा है...",
+  "speakingState": "बोल रहा है...",
+  "idleState": "बोलने के लिए दबाएं",
+  "tapToStopListening": "सुनना बंद करने के लिए दबाएं",
+  "tapToStopSpeaking": "बोलना बंद करने के लिए दबाएं",
+  "typeOrSpeak": "लिखें या बोलने के लिए माइक दबाएं..."
 }

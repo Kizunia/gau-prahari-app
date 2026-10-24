@@ -9,8 +9,9 @@ class NativeBluetoothService {
   /// Requests Bluetooth / Nearby Devices runtime permissions
   Future<bool> requestPermissions() async {
     try {
-      final bool? granted =
-          await _channel.invokeMethod<bool>('requestPermissions');
+      final bool? granted = await _channel.invokeMethod<bool>(
+        'requestPermissions',
+      );
       return granted ?? false;
     } catch (_) {
       return true;
@@ -20,8 +21,9 @@ class NativeBluetoothService {
   /// Retrieves list of paired Bluetooth devices on the Android phone
   Future<List<Map<String, String>>> getPairedDevices() async {
     try {
-      final List<dynamic>? rawList =
-          await _channel.invokeMethod<List<dynamic>>('getPairedDevices');
+      final List<dynamic>? rawList = await _channel.invokeMethod<List<dynamic>>(
+        'getPairedDevices',
+      );
       if (rawList == null) return [];
 
       return rawList.map((item) {
@@ -33,9 +35,13 @@ class NativeBluetoothService {
       }).toList();
     } on PlatformException catch (e) {
       if (e.code == 'BLUETOOTH_DISABLED') {
-        throw Exception('Bluetooth is turned OFF. Please turn ON Bluetooth in Android Settings.');
+        throw Exception(
+          'Bluetooth is turned OFF. Please turn ON Bluetooth in Android Settings.',
+        );
       } else if (e.code == 'PERMISSION_DENIED') {
-        throw Exception('Nearby devices / Bluetooth permission is required to connect to HC-05.');
+        throw Exception(
+          'Nearby devices / Bluetooth permission is required to connect to HC-05.',
+        );
       }
       return [];
     } on MissingPluginException {

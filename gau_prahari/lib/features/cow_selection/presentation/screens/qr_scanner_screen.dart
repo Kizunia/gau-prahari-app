@@ -15,7 +15,8 @@ class QrScannerScreen extends StatefulWidget {
   State<QrScannerScreen> createState() => _QrScannerScreenState();
 }
 
-class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProviderStateMixin {
+class _QrScannerScreenState extends State<QrScannerScreen>
+    with SingleTickerProviderStateMixin {
   final MobileScannerController _scannerController = MobileScannerController(
     detectionSpeed: DetectionSpeed.normal,
     facing: CameraFacing.back,
@@ -56,7 +57,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -73,17 +78,13 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
 
       // Navigate directly into Collar Telemetry import for this fetched cow
       await Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => CollarImportScreen(cow: cow),
-        ),
+        MaterialPageRoute(builder: (_) => CollarImportScreen(cow: cow)),
       );
     } else {
       final t = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            t.translate('cowNotFound', args: {'cowId': rawValue}),
-          ),
+          content: Text(t.translate('cowNotFound', args: {'cowId': rawValue})),
           backgroundColor: AppColors.error,
           duration: const Duration(seconds: 2),
         ),
@@ -106,7 +107,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           t.translate('scanQrCode'),
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           IconButton(
@@ -126,7 +130,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
             onPressed: () => _scannerController.toggleTorch(),
           ),
           IconButton(
-            icon: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white70),
+            icon: const Icon(
+              Icons.flip_camera_ios_rounded,
+              color: Colors.white70,
+            ),
             onPressed: () => _scannerController.switchCamera(),
           ),
         ],
@@ -152,11 +159,19 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.videocam_off_rounded, color: Colors.white54, size: 54),
+                      const Icon(
+                        Icons.videocam_off_rounded,
+                        color: Colors.white54,
+                        size: 54,
+                      ),
                       const SizedBox(height: 12),
                       const Text(
                         'Camera unavailable (Emulator / Permission)',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -172,9 +187,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
           ),
 
           // 2. Translucent Cutout & Target Finder Box
-          Positioned.fill(
-            child: _buildScannerOverlay(context),
-          ),
+          Positioned.fill(child: _buildScannerOverlay(context)),
 
           // 3. Instruction Banner at Top
           Positioned(
@@ -190,12 +203,20 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.qr_code_scanner_rounded, color: AppColors.success, size: 20),
+                  const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: AppColors.success,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       t.translate('scanQrPrompt'),
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -227,7 +248,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.primary),
+                      const Icon(
+                        Icons.touch_app_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         t.translate('orScanManual'),
@@ -274,11 +299,17 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
                     SizedBox(height: 16),
                     Text(
                       'Fetching Cattle Telemetry Profile...',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -322,7 +353,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
           AnimatedBuilder(
             animation: _laserAnimController,
             builder: (context, child) {
-              final topOffset = -scanAreaSize / 2 + (_laserAnimController.value * scanAreaSize);
+              final topOffset =
+                  -scanAreaSize / 2 +
+                  (_laserAnimController.value * scanAreaSize);
               return Transform.translate(
                 offset: Offset(0, topOffset),
                 child: Container(
@@ -347,7 +380,12 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
     );
   }
 
-  Widget _cornerPiece({double? top, double? bottom, double? left, double? right}) {
+  Widget _cornerPiece({
+    double? top,
+    double? bottom,
+    double? left,
+    double? right,
+  }) {
     return Positioned(
       top: top,
       bottom: bottom,
@@ -359,10 +397,18 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
         decoration: BoxDecoration(
           color: Colors.transparent,
           border: Border(
-            top: top != null ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-            bottom: bottom != null ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-            left: left != null ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
-            right: right != null ? const BorderSide(color: Colors.white, width: 4) : BorderSide.none,
+            top: top != null
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
+            bottom: bottom != null
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
+            left: left != null
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
+            right: right != null
+                ? const BorderSide(color: Colors.white, width: 4)
+                : BorderSide.none,
           ),
         ),
       ),

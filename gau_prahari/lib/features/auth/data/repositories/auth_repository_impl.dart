@@ -59,7 +59,9 @@ class AuthRepositoryImpl implements AuthRepository {
     // Default fallback: allow any valid identifier with password length >= 4
     if (matchedUser == null) {
       if (password.trim().length < 4) {
-        throw Exception('Invalid password. Password must be at least 4 characters.');
+        throw Exception(
+          'Invalid password. Password must be at least 4 characters.',
+        );
       }
       matchedUser = UserModel(
         id: 'USR-${DateTime.now().millisecondsSinceEpoch % 10000}',

@@ -200,5 +200,26 @@
   "ageLabel": "Age (years)",
   "lactationStageLabel": "Lactation Stage",
   "cowIdRequired": "Cow ID is required",
-  "editCow": "Edit Cow"
+  "editCow": "Edit Cow",
+
+  "voiceAssistant": "Voice Assistant",
+  "newConversation": "New Conversation",
+  "conversationHistory": "Conversation History",
+  "noConversationsYet": "No previous conversations yet",
+  "deleteConversationTitle": "Delete Conversation",
+  "deleteConversationConfirm": "Are you sure you want to delete this conversation?",
+  "delete": "Delete",
+  "permissionDenied": "Microphone permission is required to use voice assistant.",
+  "noSpeechDetected": "No speech detected. Please tap the microphone and try again.",
+  "speechError": "Speech recognition error occurred. Please try again.",
+  "languageNotSupported": "Selected language is not supported by device speech engine.",
+  "assistantWelcomeTitle": "Gau-Prahari Voice Assistant",
+  "assistantWelcomeSubtitle": "Tap the microphone below and speak your query in your selected language.",
+  "listeningState": "Listening...",
+  "processingState": "Thinking...",
+  "speakingState": "Speaking...",
+  "idleState": "Tap to speak",
+  "tapToStopListening": "Tap to finish listening",
+  "tapToStopSpeaking": "Tap to stop speaking",
+  "typeOrSpeak": "Type or tap mic to speak..."
 }

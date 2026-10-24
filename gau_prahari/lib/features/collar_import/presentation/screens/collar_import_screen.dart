@@ -8,15 +8,13 @@ import '../../../milk_tester/presentation/screens/milk_tester_screen.dart';
 import '../../data/repositories/file_collar_data_provider.dart';
 import '../../data/services/collar_bluetooth_service.dart';
 import '../../domain/entities/collar_telemetry.dart';
+import '../../../../features/voice_assistant/presentation/widgets/voice_assistant_button.dart';
 import '../controllers/collar_import_controller.dart';
 
 class CollarImportScreen extends StatefulWidget {
   final Cow cow;
 
-  const CollarImportScreen({
-    super.key,
-    required this.cow,
-  });
+  const CollarImportScreen({super.key, required this.cow});
 
   @override
   State<CollarImportScreen> createState() => _CollarImportScreenState();
@@ -43,9 +41,8 @@ class _CollarImportScreenState extends State<CollarImportScreen> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => CollarImportController(
-            provider: FileCollarDataProvider(),
-          ),
+          create: (_) =>
+              CollarImportController(provider: FileCollarDataProvider()),
         ),
         ChangeNotifierProvider.value(value: _btService),
       ],
@@ -58,6 +55,7 @@ class _CollarImportScreenState extends State<CollarImportScreen> {
             child: Text(t.translate('smartCollarHistory')),
           ),
           actions: [
+            const VoiceAssistantButton(),
             Container(
               margin: const EdgeInsets.only(right: 16),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -71,7 +69,11 @@ class _CollarImportScreenState extends State<CollarImportScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.pets_rounded, size: 14, color: AppColors.primary),
+                  const Icon(
+                    Icons.pets_rounded,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     widget.cow.displayName,
@@ -149,14 +151,14 @@ class _CollarImportView extends StatelessWidget {
                 ? t.translate('continueToMilkTester')
                 : t.translate('skipToMilkTester'),
             icon: Icons.arrow_forward_rounded,
-            backgroundColor: history != null ? AppColors.primary : AppColors.secondary,
+            backgroundColor: history != null
+                ? AppColors.primary
+                : AppColors.secondary,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => MilkTesterScreen(
-                    cow: cow,
-                    collarHistory: history,
-                  ),
+                  builder: (_) =>
+                      MilkTesterScreen(cow: cow, collarHistory: history),
                 ),
               );
             },
@@ -208,7 +210,9 @@ class _CollarImportView extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isStreaming ? AppColors.success.withValues(alpha: 0.5) : AppColors.border,
+          color: isStreaming
+              ? AppColors.success.withValues(alpha: 0.5)
+              : AppColors.border,
           width: isStreaming ? 1.5 : 1.0,
         ),
       ),
@@ -250,19 +254,26 @@ class _CollarImportView extends StatelessWidget {
               ),
             ],
           ),
-          if (btService.state == CollarConnectionState.error && btService.errorMessage != null) ...[
+          if (btService.state == CollarConnectionState.error &&
+              btService.errorMessage != null) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppColors.errorLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: AppColors.error, size: 16),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: AppColors.error,
+                    size: 16,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -321,7 +332,8 @@ class _CollarImportView extends StatelessWidget {
                         child: _sensorMiniCard(
                           label: t.translate('accelerometer'),
                           value: '[${packet.accX}, ${packet.accY}]',
-                          sub: 'Idx: ${packet.activityIndex.toStringAsFixed(0)}',
+                          sub:
+                              'Idx: ${packet.activityIndex.toStringAsFixed(0)}',
                           icon: Icons.screen_rotation_rounded,
                           color: Colors.deepOrange,
                         ),
@@ -330,10 +342,14 @@ class _CollarImportView extends StatelessWidget {
                       Expanded(
                         child: _sensorMiniCard(
                           label: t.translate('tissueContact'),
-                          value: packet.isWorn ? t.translate('contactDetected') : t.translate('noContact'),
+                          value: packet.isWorn
+                              ? t.translate('contactDetected')
+                              : t.translate('noContact'),
                           sub: 'IR: ${packet.irValue}',
                           icon: Icons.favorite_rounded,
-                          color: packet.isWorn ? AppColors.success : AppColors.error,
+                          color: packet.isWorn
+                              ? AppColors.success
+                              : AppColors.error,
                         ),
                       ),
                     ],
@@ -348,7 +364,10 @@ class _CollarImportView extends StatelessWidget {
               backgroundColor: AppColors.primary,
               onPressed: () {
                 final hist = btService.toCollarHistory(cowId: cow.id);
-                controller.setCollarHistory(hist, sourceName: 'HC-05 Live Hardware');
+                controller.setCollarHistory(
+                  hist,
+                  sourceName: 'HC-05 Live Hardware',
+                );
               },
             ),
             const SizedBox(height: 8),
@@ -362,15 +381,25 @@ class _CollarImportView extends StatelessWidget {
                   onPressed: () => _openDevicePicker(context, btService),
                   icon: const Icon(Icons.bluetooth_rounded, size: 16),
                   label: Text(
-                    isStreaming ? btService.connectedDeviceName ?? 'HC-05' : t.translate('connectBluetoothCollar'),
+                    isStreaming
+                        ? btService.connectedDeviceName ?? 'HC-05'
+                        : t.translate('connectBluetoothCollar'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 8,
+                    ),
                     side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -381,20 +410,39 @@ class _CollarImportView extends StatelessWidget {
                   // Also auto push initial history into controller
                   Future.delayed(const Duration(milliseconds: 1300), () {
                     final hist = btService.toCollarHistory(cowId: cow.id);
-                    controller.setCollarHistory(hist, sourceName: 'Arduino Collar (Live)');
+                    controller.setCollarHistory(
+                      hist,
+                      sourceName: 'Arduino Collar (Live)',
+                    );
                   });
                 },
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 10,
+                  ),
                   side: const BorderSide(color: AppColors.secondary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.play_circle_outline_rounded, size: 16, color: AppColors.secondary),
+                    Icon(
+                      Icons.play_circle_outline_rounded,
+                      size: 16,
+                      color: AppColors.secondary,
+                    ),
                     SizedBox(width: 4),
-                    Text('Demo Stream', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+                    Text(
+                      'Demo Stream',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -431,7 +479,11 @@ class _CollarImportView extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -441,7 +493,11 @@ class _CollarImportView extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
           ),
           Text(
             sub,
@@ -454,7 +510,10 @@ class _CollarImportView extends StatelessWidget {
     );
   }
 
-  void _openDevicePicker(BuildContext context, CollarBluetoothService btService) async {
+  void _openDevicePicker(
+    BuildContext context,
+    CollarBluetoothService btService,
+  ) async {
     final t = AppLocalizations.of(context);
     final devices = await btService.getPairedDevices();
 
@@ -475,11 +534,17 @@ class _CollarImportView extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.bluetooth_audio_rounded, color: AppColors.primary),
+                    const Icon(
+                      Icons.bluetooth_audio_rounded,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       t.translate('selectCollarDevice'),
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -489,15 +554,27 @@ class _CollarImportView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text(
                       'No paired devices found. Please pair HC-05 in Android Bluetooth Settings.',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 else
                   ...devices.map(
                     (d) => ListTile(
-                      leading: const Icon(Icons.devices_other_rounded, color: AppColors.primary),
-                      title: Text(d['name'] ?? 'HC-05', style: const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text(d['address'] ?? '', style: const TextStyle(fontSize: 12)),
+                      leading: const Icon(
+                        Icons.devices_other_rounded,
+                        color: AppColors.primary,
+                      ),
+                      title: Text(
+                        d['name'] ?? 'HC-05',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        d['address'] ?? '',
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       onTap: () {
                         Navigator.pop(ctx);
                         btService.connect(
@@ -530,7 +607,11 @@ class _CollarImportView extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.history_rounded, size: 20, color: AppColors.primary),
+              const Icon(
+                Icons.history_rounded,
+                size: 20,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -575,7 +656,11 @@ class _CollarImportView extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.folder_zip_rounded, size: 16, color: AppColors.secondary),
+              const Icon(
+                Icons.folder_zip_rounded,
+                size: 16,
+                color: AppColors.secondary,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -674,7 +759,11 @@ class _CollarImportView extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.error,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -703,7 +792,11 @@ class _CollarImportView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.sensors_rounded, size: 48, color: AppColors.textMuted),
+          const Icon(
+            Icons.sensors_rounded,
+            size: 48,
+            color: AppColors.textMuted,
+          ),
           const SizedBox(height: 12),
           Text(
             t.translate('noTelemetryFileLoaded'),
@@ -749,11 +842,18 @@ class _CollarImportView extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.success,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        t.translate('daysTelemetryImported', args: {'count': history.recordCount.toString()}),
+                        t.translate(
+                          'daysTelemetryImported',
+                          args: {'count': history.recordCount.toString()},
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -769,7 +869,10 @@ class _CollarImportView extends StatelessWidget {
               if (sourceName != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(6),
@@ -844,11 +947,26 @@ class _CollarImportView extends StatelessWidget {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _buildChannelBadge(t.translate('activity'), Icons.directions_run_rounded),
-              _buildChannelBadge(t.translate('skinTemperature'), Icons.thermostat_rounded),
-              _buildChannelBadge(t.translate('ambientTemperature'), Icons.cloud_outlined),
-              _buildChannelBadge(t.translate('humidity'), Icons.water_drop_outlined),
-              _buildChannelBadge(t.translate('thiStressIndex'), Icons.wb_sunny_outlined),
+              _buildChannelBadge(
+                t.translate('activity'),
+                Icons.directions_run_rounded,
+              ),
+              _buildChannelBadge(
+                t.translate('skinTemperature'),
+                Icons.thermostat_rounded,
+              ),
+              _buildChannelBadge(
+                t.translate('ambientTemperature'),
+                Icons.cloud_outlined,
+              ),
+              _buildChannelBadge(
+                t.translate('humidity'),
+                Icons.water_drop_outlined,
+              ),
+              _buildChannelBadge(
+                t.translate('thiStressIndex'),
+                Icons.wb_sunny_outlined,
+              ),
             ],
           ),
         ],
@@ -879,7 +997,10 @@ class _CollarImportView extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],

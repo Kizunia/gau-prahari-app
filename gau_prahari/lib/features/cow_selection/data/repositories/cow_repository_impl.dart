@@ -64,7 +64,10 @@ class CowRepositoryImpl implements CowRepository {
 
   Future<void> _saveUserCows(List<Cow> cows) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userCowsKey, json.encode(cows.map((c) => c.toJson()).toList()));
+    await prefs.setString(
+      _userCowsKey,
+      json.encode(cows.map((c) => c.toJson()).toList()),
+    );
   }
 
   // ── CowRepository ─────────────────────────────────────────────────────────
@@ -82,7 +85,9 @@ class CowRepositoryImpl implements CowRepository {
 
     // Merge: catalog first, then user-added cows not shadowing catalog IDs
     final catalogIds = _catalog.map((c) => c.id).toSet();
-    final uniqueUserCows = userCows.where((c) => !catalogIds.contains(c.id)).toList();
+    final uniqueUserCows = userCows
+        .where((c) => !catalogIds.contains(c.id))
+        .toList();
 
     return [...catalogWithNames, ...uniqueUserCows];
   }
@@ -94,7 +99,8 @@ class CowRepositoryImpl implements CowRepository {
 
     // 1. Direct ID / tag match across all cows
     for (final cow in all) {
-      if (cow.id.toUpperCase() == clean || cow.tagNumber.toUpperCase() == clean) {
+      if (cow.id.toUpperCase() == clean ||
+          cow.tagNumber.toUpperCase() == clean) {
         return cow;
       }
     }
@@ -103,12 +109,14 @@ class CowRepositoryImpl implements CowRepository {
     try {
       if (clean.startsWith('{') && clean.endsWith('}')) {
         final decoded = json.decode(query) as Map<String, dynamic>;
-        final targetId = (decoded['cow_id'] ?? decoded['id'] ?? decoded['tag_number'] ?? '')
-            .toString()
-            .trim()
-            .toUpperCase();
+        final targetId =
+            (decoded['cow_id'] ?? decoded['id'] ?? decoded['tag_number'] ?? '')
+                .toString()
+                .trim()
+                .toUpperCase();
         for (final cow in all) {
-          if (cow.id.toUpperCase() == targetId || cow.tagNumber.toUpperCase() == targetId) {
+          if (cow.id.toUpperCase() == targetId ||
+              cow.tagNumber.toUpperCase() == targetId) {
             return cow;
           }
         }
@@ -122,7 +130,8 @@ class CowRepositoryImpl implements CowRepository {
 
     // 3. Contains match
     for (final cow in all) {
-      if (clean.contains(cow.id.toUpperCase()) || clean.contains(cow.tagNumber.toUpperCase())) {
+      if (clean.contains(cow.id.toUpperCase()) ||
+          clean.contains(cow.tagNumber.toUpperCase())) {
         return cow;
       }
     }
@@ -156,7 +165,9 @@ class CowRepositoryImpl implements CowRepository {
   @override
   Future<bool> deleteCow(String id) async {
     final catalogIds = _catalog.map((c) => c.id).toSet();
-    if (catalogIds.contains(id)) return false; // Cannot delete built-in catalog cows
+    if (catalogIds.contains(id)) {
+      return false; // Cannot delete built-in catalog cows
+    }
 
     final userCows = await _loadUserCows();
     final before = userCows.length;
@@ -179,7 +190,10 @@ class CowRepositoryImpl implements CowRepository {
     final userCows = await _loadUserCows();
     final idx = userCows.indexWhere((c) => c.id == id);
     if (idx >= 0) {
-      userCows[idx] = userCows[idx].copyWith(name: name?.trim(), clearName: name == null || name.trim().isEmpty);
+      userCows[idx] = userCows[idx].copyWith(
+        name: name?.trim(),
+        clearName: name == null || name.trim().isEmpty,
+      );
       await _saveUserCows(userCows);
     }
 

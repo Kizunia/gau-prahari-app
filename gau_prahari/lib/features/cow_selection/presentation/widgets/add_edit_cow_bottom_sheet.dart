@@ -153,8 +153,11 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.pets_rounded,
-                        color: AppColors.primary, size: 22),
+                    child: const Icon(
+                      Icons.pets_rounded,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -187,7 +190,10 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
               // ── Extra fields only for adding a new cow ─────────────────
               if (!_isEditing) ...[
                 const SizedBox(height: 16),
-                _SectionLabel(icon: Icons.tag_rounded, label: t.translate('cowIdLabel')),
+                _SectionLabel(
+                  icon: Icons.tag_rounded,
+                  label: t.translate('cowIdLabel'),
+                ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _idCtrl,
@@ -196,12 +202,15 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                     hint: 'e.g., COW-105',
                     prefixIcon: Icons.numbers_rounded,
                   ),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? t.translate('cowIdRequired') : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? t.translate('cowIdRequired')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 _SectionLabel(
-                    icon: Icons.nfc_rounded, label: t.translate('rfidTagLabel')),
+                  icon: Icons.nfc_rounded,
+                  label: t.translate('rfidTagLabel'),
+                ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _tagCtrl,
@@ -213,7 +222,9 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                 ),
                 const SizedBox(height: 16),
                 _SectionLabel(
-                    icon: Icons.category_rounded, label: t.translate('breedLabel')),
+                  icon: Icons.category_rounded,
+                  label: t.translate('breedLabel'),
+                ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _breedCtrl,
@@ -231,7 +242,9 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _SectionLabel(
-                              icon: Icons.cake_rounded, label: t.translate('ageLabel')),
+                            icon: Icons.cake_rounded,
+                            label: t.translate('ageLabel'),
+                          ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _ageCtrl,
@@ -248,8 +261,9 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                 ),
                 const SizedBox(height: 16),
                 _SectionLabel(
-                    icon: Icons.water_drop_rounded,
-                    label: t.translate('lactationStageLabel')),
+                  icon: Icons.water_drop_rounded,
+                  label: t.translate('lactationStageLabel'),
+                ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _lactationCtrl,
@@ -272,14 +286,19 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded,
-                          color: AppColors.error, size: 18),
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _saveError!,
                           style: const TextStyle(
-                              color: AppColors.error, fontSize: 13),
+                            color: AppColors.error,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -294,15 +313,20 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: Text(t.translate('cancel'),
-                          style: const TextStyle(color: AppColors.textSecondary)),
+                      child: Text(
+                        t.translate('cancel'),
+                        style: const TextStyle(color: AppColors.textSecondary),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -315,15 +339,27 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : Icon(_isEditing ? Icons.check_rounded : Icons.add_rounded),
-                      label: Text(_isEditing ? t.translate('saveName') : t.translate('addCow')),
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Icon(
+                              _isEditing
+                                  ? Icons.check_rounded
+                                  : Icons.add_rounded,
+                            ),
+                      label: Text(
+                        _isEditing
+                            ? t.translate('saveName')
+                            : t.translate('addCow'),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -357,8 +393,10 @@ class _AddEditCowSheetState extends State<_AddEditCowSheet> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: AppColors.borderFocused, width: 1.5),
+        borderSide: const BorderSide(
+          color: AppColors.borderFocused,
+          width: 1.5,
+        ),
       ),
     );
   }

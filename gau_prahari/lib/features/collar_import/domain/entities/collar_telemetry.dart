@@ -44,10 +44,7 @@ class CollarHistory {
   final String cowId;
   final List<CollarTelemetry> records;
 
-  const CollarHistory({
-    required this.cowId,
-    required this.records,
-  });
+  const CollarHistory({required this.cowId, required this.records});
 
   int get recordCount => records.length;
 
@@ -56,22 +53,26 @@ class CollarHistory {
 
   double get meanActivity {
     if (records.isEmpty) return 0.0;
-    return records.map((r) => r.activity).reduce((a, b) => a + b) / records.length;
+    return records.map((r) => r.activity).reduce((a, b) => a + b) /
+        records.length;
   }
 
   double get meanSkinTemperature {
     if (records.isEmpty) return 0.0;
-    return records.map((r) => r.skinTemperature).reduce((a, b) => a + b) / records.length;
+    return records.map((r) => r.skinTemperature).reduce((a, b) => a + b) /
+        records.length;
   }
 
   double get meanAmbientTemperature {
     if (records.isEmpty) return 0.0;
-    return records.map((r) => r.ambientTemperature).reduce((a, b) => a + b) / records.length;
+    return records.map((r) => r.ambientTemperature).reduce((a, b) => a + b) /
+        records.length;
   }
 
   double get meanHumidity {
     if (records.isEmpty) return 0.0;
-    return records.map((r) => r.humidity).reduce((a, b) => a + b) / records.length;
+    return records.map((r) => r.humidity).reduce((a, b) => a + b) /
+        records.length;
   }
 
   double get meanThi {

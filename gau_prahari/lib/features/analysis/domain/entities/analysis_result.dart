@@ -40,11 +40,13 @@ class AnalysisResult {
       prediction: (json['prediction'] as num).toInt(),
       probability: (json['probability'] as num?)?.toDouble(),
       riskLevel: json['risk_level'] as String? ?? 'LOW',
-      factors: (json['factors'] as List<dynamic>?)
+      factors:
+          (json['factors'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      recommendedAction: json['recommended_action'] as String? ??
+      recommendedAction:
+          json['recommended_action'] as String? ??
           'Maintain regular monitoring.',
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'] as String)

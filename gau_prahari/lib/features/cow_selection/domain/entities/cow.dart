@@ -19,7 +19,8 @@ class Cow {
   });
 
   /// Returns a display label: farmer name if set, otherwise the cow ID.
-  String get displayName => (name != null && name!.trim().isNotEmpty) ? name! : id;
+  String get displayName =>
+      (name != null && name!.trim().isNotEmpty) ? name! : id;
 
   /// Returns a copy of this cow with the given fields replaced.
   Cow copyWith({

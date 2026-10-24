@@ -117,7 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             hint: t.translate('emailHint'),
                             prefixIcon: Icons.badge_outlined,
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) => Validators.validateIdentifier(value, context),
+                            validator: (value) =>
+                                Validators.validateIdentifier(value, context),
                             textInputAction: TextInputAction.next,
                           ),
                           const SizedBox(height: 16),
@@ -129,7 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             hint: t.translate('passwordHint'),
                             prefixIcon: Icons.lock_outline,
                             obscureText: _obscurePassword,
-                            validator: (value) => Validators.validatePassword(value, context),
+                            validator: (value) =>
+                                Validators.validatePassword(value, context),
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _handleLogin(),
                             suffixIcon: IconButton(
@@ -195,7 +197,10 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: BoxDecoration(
             color: AppColors.primaryLight,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              width: 2,
+            ),
           ),
           child: const Center(
             child: Icon(
@@ -239,7 +244,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.error,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -270,7 +279,11 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.bolt_rounded, size: 16, color: AppColors.secondary),
+              const Icon(
+                Icons.bolt_rounded,
+                size: 16,
+                color: AppColors.secondary,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(

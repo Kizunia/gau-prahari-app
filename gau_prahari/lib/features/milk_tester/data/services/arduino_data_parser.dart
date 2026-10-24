@@ -25,13 +25,12 @@ class ArduinoDataParser {
   const ArduinoDataParser();
 
   /// Parses both structured JSON and raw string formats emitted by Arduino HC-05
-  ParsedArduinoPayload parse({
-    required String rawData,
-    required String cowId,
-  }) {
+  ParsedArduinoPayload parse({required String rawData, required String cowId}) {
     final clean = rawData.trim();
     if (clean.isEmpty) {
-      throw const FormatException('Empty payload received from Bluetooth stream');
+      throw const FormatException(
+        'Empty payload received from Bluetooth stream',
+      );
     }
 
     // --- Mode 1: Structured JSON Payload ---
@@ -47,16 +46,24 @@ class ArduinoDataParser {
         final isAlkaline = ph > 6.80;
         final isGasHigh = (gas != null && gas > 350);
 
-        final double estimatedCond = 4.60 + (isAlkaline ? (ph - 6.80) * 3.5 : 0.0) + (isGasHigh ? (gas - 350) * 0.003 : 0.0);
+        final double estimatedCond =
+            4.60 +
+            (isAlkaline ? (ph - 6.80) * 3.5 : 0.0) +
+            (isGasHigh ? (gas - 350) * 0.003 : 0.0);
         final int estimatedScc = (isAlkaline || isGasHigh)
-            ? (350000 + ((ph - 6.80) * 500000).toInt() + ((gas ?? 200) * 250)).clamp(300000, 950000)
+            ? (350000 + ((ph - 6.80) * 500000).toInt() + ((gas ?? 200) * 250))
+                  .clamp(300000, 950000)
             : 120000;
-        final double estimatedTemp = 35.8 + (isAlkaline || isGasHigh ? 1.8 : 0.2);
+        final double estimatedTemp =
+            35.8 + (isAlkaline || isGasHigh ? 1.8 : 0.2);
         final double estimatedFat = (isAlkaline || isGasHigh) ? 3.2 : 4.1;
         final double estimatedSnf = (isAlkaline || isGasHigh) ? 7.8 : 8.6;
 
-        final double temp = (json['milk_temperature'] as num?)?.toDouble() ?? estimatedTemp;
-        final double cond = (json['conductivity'] as num?)?.toDouble() ?? double.parse(estimatedCond.toStringAsFixed(2));
+        final double temp =
+            (json['milk_temperature'] as num?)?.toDouble() ?? estimatedTemp;
+        final double cond =
+            (json['conductivity'] as num?)?.toDouble() ??
+            double.parse(estimatedCond.toStringAsFixed(2));
         final double fat = (json['fat'] as num?)?.toDouble() ?? estimatedFat;
         final double snf = (json['snf'] as num?)?.toDouble() ?? estimatedSnf;
 
@@ -88,22 +95,35 @@ class ArduinoDataParser {
 
     // --- Mode 2: Key-Value Raw Format (e.g. "pH:4.10,LEVEL:17,GAS:44,STATUS:ACIDIC" or "pH:6.7,G:210,D:15cm") ---
     final upperClean = clean.toUpperCase();
-    if (upperClean.contains('PH:') || upperClean.contains('GAS:') || upperClean.contains('G:') || upperClean.contains('LEVEL:') || upperClean.contains('D:')) {
+    if (upperClean.contains('PH:') ||
+        upperClean.contains('GAS:') ||
+        upperClean.contains('G:') ||
+        upperClean.contains('LEVEL:') ||
+        upperClean.contains('D:')) {
       double ph = 6.65;
       int gas = 200;
       int? distance;
 
-      final phMatches = RegExp(r'pH:\s*([\d\.]+)', caseSensitive: false).allMatches(clean);
+      final phMatches = RegExp(
+        r'pH:\s*([\d\.]+)',
+        caseSensitive: false,
+      ).allMatches(clean);
       if (phMatches.isNotEmpty) {
         ph = double.tryParse(phMatches.last.group(1) ?? '') ?? 6.65;
       }
 
-      final gMatches = RegExp(r'(?:GAS|G):\s*(\d+)', caseSensitive: false).allMatches(clean);
+      final gMatches = RegExp(
+        r'(?:GAS|G):\s*(\d+)',
+        caseSensitive: false,
+      ).allMatches(clean);
       if (gMatches.isNotEmpty) {
         gas = int.tryParse(gMatches.last.group(1) ?? '') ?? 200;
       }
 
-      final dMatches = RegExp(r'(?:LEVEL|D):\s*(\d+)', caseSensitive: false).allMatches(clean);
+      final dMatches = RegExp(
+        r'(?:LEVEL|D):\s*(\d+)',
+        caseSensitive: false,
+      ).allMatches(clean);
       if (dMatches.isNotEmpty) {
         distance = int.tryParse(dMatches.last.group(1) ?? '');
       }
@@ -115,13 +135,26 @@ class ArduinoDataParser {
       final isAcidic = ph < 6.40;
       final isGasHigh = gas > 350;
 
-      final double cond = 4.60 + (isAlkaline ? (ph - 6.80) * 3.5 : 0.0) + (isAcidic ? (6.40 - ph) * 0.5 : 0.0) + (isGasHigh ? (gas - 350) * 0.003 : 0.0);
+      final double cond =
+          4.60 +
+          (isAlkaline ? (ph - 6.80) * 3.5 : 0.0) +
+          (isAcidic ? (6.40 - ph) * 0.5 : 0.0) +
+          (isGasHigh ? (gas - 350) * 0.003 : 0.0);
       final int scc = (isAlkaline || isGasHigh)
-          ? (350000 + ((ph - 6.80) * 500000).toInt() + (gas * 250)).clamp(300000, 950000)
-          : (isAcidic ? (150000 + ((6.40 - ph) * 80000).toInt()).clamp(120000, 400000) : 120000);
+          ? (350000 + ((ph - 6.80) * 500000).toInt() + (gas * 250)).clamp(
+              300000,
+              950000,
+            )
+          : (isAcidic
+                ? (150000 + ((6.40 - ph) * 80000).toInt()).clamp(120000, 400000)
+                : 120000);
       final double temp = 35.8 + (isAlkaline || isGasHigh ? 1.8 : 0.2);
-      final double fat = (isAlkaline || isGasHigh) ? 3.2 : (isAcidic ? 3.6 : 4.2);
-      final double snf = (isAlkaline || isGasHigh) ? 7.8 : (isAcidic ? 8.1 : 8.8);
+      final double fat = (isAlkaline || isGasHigh)
+          ? 3.2
+          : (isAcidic ? 3.6 : 4.2);
+      final double snf = (isAlkaline || isGasHigh)
+          ? 7.8
+          : (isAcidic ? 8.1 : 8.8);
 
       final measurement = MilkMeasurement(
         cowId: cowId,

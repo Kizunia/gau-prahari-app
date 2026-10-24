@@ -7,7 +7,8 @@ class AppConstants {
   AppConstants._();
 
   // Backend configuration (configurable for local dev vs production)
-  static const String defaultApiBaseUrl = 'http://10.0.2.2:8000'; // Android emulator to host
+  static const String defaultApiBaseUrl =
+      'http://10.0.2.2:8000'; // Android emulator to host
   static const String predictEndpoint = '/api/v1/analysis/predict';
 
   // Session keys for SharedPreferences

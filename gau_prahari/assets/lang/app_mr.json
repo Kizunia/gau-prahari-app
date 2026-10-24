@@ -200,5 +200,26 @@
   "ageLabel": "वय (वर्षे)",
   "lactationStageLabel": "दुग्ध अवस्था",
   "cowIdRequired": "गाय आयडी आवश्यक आहे",
-  "editCow": "गाय संपादित करा"
+  "editCow": "गाय संपादित करा",
+
+  "voiceAssistant": "व्हॉइस असिस्टंट",
+  "newConversation": "नवीन संभाषण",
+  "conversationHistory": "संभाषण इतिहास",
+  "noConversationsYet": "मागील कोणतेही संभाषण नाही",
+  "deleteConversationTitle": "संभाषण हटवा",
+  "deleteConversationConfirm": "आपण खरोखर हे संभाषण हटवू इच्छिता?",
+  "delete": "हटवा",
+  "permissionDenied": "व्हॉइस असिस्टंट वापरण्यासाठी मायक्रोफोन परवानगी आवश्यक आहे.",
+  "noSpeechDetected": "कोणताही आवाज आढळला नाही. कृपया पुन्हा प्रयत्न करा.",
+  "speechError": "आवाज ओळखण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.",
+  "languageNotSupported": "निवडलेली भाषा डिव्हाइसवर समर्थित नाही.",
+  "assistantWelcomeTitle": "गो-प्रहरी व्हॉइस असिस्टंट",
+  "assistantWelcomeSubtitle": "खालील माइक दाबा आणि आपल्या निवडलेल्या भाषेत प्रश्न विचारा.",
+  "listeningState": "ऐकत आहे...",
+  "processingState": "विचार करत आहे...",
+  "speakingState": "बोलत आहे...",
+  "idleState": "बोलण्यासाठी दाबा",
+  "tapToStopListening": "ऐकणे थांबवण्यासाठी दाबा",
+  "tapToStopSpeaking": "बोलणे थांबवण्यासाठी दाबा",
+  "typeOrSpeak": "टाइप करा किंवा बोलण्यासाठी माइक दाबा..."
 }
