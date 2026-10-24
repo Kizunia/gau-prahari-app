@@ -17,15 +17,120 @@ import java.io.InputStreamReader
 import java.util.UUID
 import kotlin.concurrent.thread
 
-class MainActivity : FlutterActivity() {
-    private val CHANNEL = "gau_prahari/bluetooth"
+/**
+ * Multi-device Bluetooth RFCOMM Manager supporting independent connections:
+ * - "milk_tester" channel: dedicated to Handheld Milk Tester HC-05 (pH, SCC, Temp, Cond)
+ * - "collar" channel: dedicated to Smart Collar HC-05 (DHT22 Temp/Hum, MPU9250 Acc, MAX30105 IR)
+ */
+class BluetoothDeviceSession(private val channelName: String, private val expectedPrefixes: List<String>) {
     private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    var bluetoothSocket: BluetoothSocket? = null
+    var reader: BufferedReader? = null
+
+    fun connect(adapter: BluetoothAdapter?, address: String, onComplete: (Boolean, String?) -> Unit) {
+        thread {
+            try {
+                adapter?.cancelDiscovery()
+                val device: BluetoothDevice? = adapter?.getRemoteDevice(address)
+
+                var socket: BluetoothSocket? = null
+                try {
+                    socket = device?.createRfcommSocketToServiceRecord(SPP_UUID)
+                    socket?.connect()
+                } catch (e1: Exception) {
+                    try {
+                        val m = device?.javaClass?.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                        socket = m?.invoke(device, 1) as? BluetoothSocket
+                        socket?.connect()
+                    } catch (e2: Exception) {
+                        onComplete(false, "Could not connect to $channelName HC-05 ($address). Check power and pairing: ${e1.message}")
+                        return@thread
+                    }
+                }
+
+                bluetoothSocket = socket
+                reader = BufferedReader(InputStreamReader(bluetoothSocket?.inputStream))
+                onComplete(true, null)
+            } catch (e: Exception) {
+                onComplete(false, e.message ?: "Failed to connect to $channelName")
+            }
+        }
+    }
+
+    fun isConnected(): Boolean {
+        return bluetoothSocket?.isConnected == true
+    }
+
+    fun readPacket(timeoutMs: Long = 6000, onResult: (String?, String?) -> Unit) {
+        thread {
+            try {
+                val socket = bluetoothSocket
+                if (socket == null || !socket.isConnected) {
+                    onResult(null, "Bluetooth socket for $channelName is not connected")
+                    return@thread
+                }
+
+                val currentReader = reader ?: BufferedReader(InputStreamReader(socket.inputStream)).also { reader = it }
+                var latestMatchingLine: String? = null
+                val startTime = System.currentTimeMillis()
+
+                while (System.currentTimeMillis() - startTime < timeoutMs) {
+                    if (currentReader.ready()) {
+                        val l = currentReader.readLine() ?: break
+                        val clean = l.trim()
+                        if (clean.isNotEmpty()) {
+                            val matched = expectedPrefixes.isEmpty() || expectedPrefixes.any { clean.contains(it, ignoreCase = true) }
+                            if (matched) {
+                                latestMatchingLine = clean
+                                // Drain any remaining backlog to obtain the freshest live telemetry
+                                if (!currentReader.ready()) {
+                                    break
+                                }
+                            }
+                        }
+                    } else {
+                        Thread.sleep(50)
+                    }
+                }
+
+                if (latestMatchingLine != null) {
+                    onResult(latestMatchingLine, null)
+                } else {
+                    onResult(null, "No valid telemetry received from $channelName HC-05 within timeout")
+                }
+            } catch (e: Exception) {
+                onResult(null, e.message ?: "Error reading from $channelName")
+            }
+        }
+    }
+
+    fun disconnect() {
+        try {
+            reader?.close()
+            bluetoothSocket?.close()
+            reader = null
+            bluetoothSocket = null
+        } catch (_: Exception) {}
+    }
+}
+
+class MainActivity : FlutterActivity() {
+    private val MILK_CHANNEL = "gau_prahari/bluetooth"
+    private val COLLAR_CHANNEL = "gau_prahari/bluetooth_collar"
     private val PERMISSION_REQUEST_CODE = 2026
 
     private var bluetoothAdapter: BluetoothAdapter? = null
-    private var bluetoothSocket: BluetoothSocket? = null
-    private var reader: BufferedReader? = null
     private var pendingPermissionResult: MethodChannel.Result? = null
+
+    // Two independent sessions for milk tester and collar hardware!
+    private val milkTesterSession = BluetoothDeviceSession(
+        "Milk Tester",
+        listOf("{", "ph", "gas", "scc", "conductivity", "g:", "d:")
+    )
+    private val collarSession = BluetoothDeviceSession(
+        "Collar",
+        listOf("T:", "H:", "Acc", "IR:", "ID:")
+    )
 
     private fun checkPermissions(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -39,11 +144,10 @@ class MainActivity : FlutterActivity() {
             ) == PackageManager.PERMISSION_GRANTED
             connectGranted && scanGranted
         } else {
-            val locGranted = ContextCompat.checkSelfPermission(
+            ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-            locGranted
         }
     }
 
@@ -94,7 +198,15 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        // 1. Setup Milk Tester Channel (Leaves existing Milk Tester logic 100% untouched)
+        setupChannel(flutterEngine, MILK_CHANNEL, milkTesterSession)
+
+        // 2. Setup Dedicated Collar Channel (Completely isolated socket & stream)
+        setupChannel(flutterEngine, COLLAR_CHANNEL, collarSession)
+    }
+
+    private fun setupChannel(flutterEngine: FlutterEngine, channelName: String, session: BluetoothDeviceSession) {
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName).setMethodCallHandler { call, result ->
             when (call.method) {
                 "requestPermissions" -> {
                     requestAppPermissions(result)
@@ -111,7 +223,6 @@ class MainActivity : FlutterActivity() {
                     }
 
                     if (!checkPermissions()) {
-                        // Request permissions automatically
                         requestAppPermissions(object : MethodChannel.Result {
                             override fun success(res: Any?) {
                                 if (res == true) {
@@ -139,106 +250,36 @@ class MainActivity : FlutterActivity() {
                         result.error("INVALID_ARGS", "Device address is required", null)
                         return@setMethodCallHandler
                     }
-                    thread {
-                        try {
-                            bluetoothAdapter?.cancelDiscovery()
-                            val device: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice(address)
-                            
-                            // Try standard SPP UUID first
-                            var socket: BluetoothSocket? = null
-                            try {
-                                socket = device?.createRfcommSocketToServiceRecord(SPP_UUID)
-                                socket?.connect()
-                            } catch (e1: Exception) {
-                                // Fallback to reflection socket on port 1 (common for HC-05 on Android)
-                                try {
-                                    val m = device?.javaClass?.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
-                                    socket = m?.invoke(device, 1) as? BluetoothSocket
-                                    socket?.connect()
-                                } catch (e2: Exception) {
-                                    throw Exception("Could not connect to HC-05. Please ensure HC-05 is powered on and not connected to another app (e.g. Serial Terminal). Details: ${e1.message}")
-                                }
-                            }
-
-                            bluetoothSocket = socket
-                            reader = BufferedReader(InputStreamReader(bluetoothSocket?.inputStream))
-                            runOnUiThread {
+                    session.connect(bluetoothAdapter, address) { success, errMsg ->
+                        runOnUiThread {
+                            if (success) {
                                 result.success(true)
-                            }
-                        } catch (e: Exception) {
-                            runOnUiThread {
-                                result.error("CONNECT_FAILED", e.message ?: "Failed to connect to HC-05", null)
+                            } else {
+                                result.error("CONNECT_FAILED", errMsg ?: "Failed to connect", null)
                             }
                         }
                     }
                 }
 
                 "isConnected" -> {
-                    val connected = bluetoothSocket?.isConnected == true
-                    result.success(connected)
+                    result.success(session.isConnected())
                 }
 
                 "readPacket" -> {
-                    thread {
-                        try {
-                            val socket = bluetoothSocket
-                            if (socket == null || !socket.isConnected) {
-                                runOnUiThread {
-                                    result.error("NOT_CONNECTED", "Bluetooth socket is not connected", null)
-                                }
-                                return@thread
-                            }
-
-                            val inStream = socket.inputStream
-                            // 1. DRAIN / FLUSH all stale backlog bytes accumulated while the app was idle
-                            try {
-                                if (inStream != null && inStream.available() > 0) {
-                                    inStream.skip(inStream.available().toLong())
-                                }
-                            } catch (_: Exception) {}
-
-                            // Create fresh reader on the purged stream
-                            val freshReader = BufferedReader(InputStreamReader(inStream))
-                            reader = freshReader
-
-                            var line: String? = null
-                            val startTime = System.currentTimeMillis()
-                            
-                            // Poll up to 6 seconds for the next live freshly arriving packet
-                            while (System.currentTimeMillis() - startTime < 6000) {
-                                val l = freshReader.readLine()
-                                if (!l.isNullOrBlank() && (l.contains("{") || l.contains("pH:") || l.contains("G:"))) {
-                                    line = l
-                                    break
-                                }
-                            }
-
-                            val finalLine = line
-                            runOnUiThread {
-                                if (finalLine != null) {
-                                    result.success(finalLine)
-                                } else {
-                                    result.error("READ_TIMEOUT", "No valid sensor telemetry received from HC-05. Make sure Arduino is transmitting data.", null)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            runOnUiThread {
-                                result.error("READ_FAILED", e.message ?: "Error reading Bluetooth stream", null)
+                    session.readPacket { line, error ->
+                        runOnUiThread {
+                            if (line != null) {
+                                result.success(line)
+                            } else {
+                                result.error("READ_FAILED", error ?: "Failed to read packet", null)
                             }
                         }
                     }
                 }
 
                 "disconnect" -> {
-                    try {
-                        reader?.close()
-                        bluetoothSocket?.close()
-                        reader = null
-                        bluetoothSocket = null
-                        result.success(true)
-                    } catch (e: Exception) {
-                        result.error("DISCONNECT_ERROR", e.message, null)
-                    }
+                    session.disconnect()
+                    result.success(true)
                 }
 
                 else -> result.notImplemented()

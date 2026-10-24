@@ -173,6 +173,19 @@
   "invalidQrFormat": "अमान्य QR कोड प्रारूप। कृपया एक मान्य गौ-प्रहरी मवेशी टैग स्कैन करें।",
   "simulateScan": "डेमो स्कैन",
   "flash": "फ्लैश",
-  "switchCamera": "कैमरा बदलें",
-  "orScanManual": "त्वरित डेमो परीक्षण (स्कैन सिमुलेट करने के लिए टैप करें):"
+  "orScanManual": "त्वरित डेमो परीक्षण (स्कैन सिमुलेट करने के लिए टैप करें):",
+  "collarHardwareConnection": "कॉलर हार्डवेयर कनेक्शन",
+  "connectBluetoothCollar": "ब्लूटूथ कॉलर कनेक्ट करें (HC-05)",
+  "collarLiveStream": "लाइव कॉलर टेलीमेट्री",
+  "connectingToCollar": "कॉलर से कनेक्ट हो रहा है...",
+  "collarConnectedStreaming": "कॉलर कनेक्टेड और स्ट्रीमिंग चालू",
+  "collarDisconnected": "कॉलर डिस्कनेक्टेड",
+  "simulateCollarStream": "लाइव कॉलर स्ट्रीम सिमुलेट करें",
+  "selectCollarDevice": "कॉलर डिवाइस चुनें",
+  "ambientTemp": "परिवेश तापमान",
+  "accelerometer": "एक्सेलेरोमीटर",
+  "tissueContact": "ऊतक संपर्क",
+  "contactDetected": "संपर्क पहचाना गया",
+  "noContact": "कोई संपर्क नहीं",
+  "syncCollarData": "कॉलर डेटा कैप्चर करें और आगे बढ़ें"
 }

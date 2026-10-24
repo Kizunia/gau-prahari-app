@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../data/repositories/hardware_milk_tester.dart';
 import '../../data/repositories/mock_milk_tester.dart';
 import '../../data/services/arduino_data_parser.dart';
@@ -128,7 +129,11 @@ class MilkTesterController extends ChangeNotifier {
       }
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      if (e is PlatformException) {
+        _errorMessage = e.message ?? e.code;
+      } else {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
       _state = MilkTestingState.error;
     } finally {
       notifyListeners();

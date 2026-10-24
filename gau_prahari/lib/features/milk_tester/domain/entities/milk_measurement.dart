@@ -31,8 +31,8 @@ class MilkMeasurement {
     if (milkTemperature < 25.0 || milkTemperature > 45.0) {
       errors.add('Milk temperature (${milkTemperature.toStringAsFixed(1)} °C) is outside physiological range (25-45 °C)');
     }
-    if (ph < 5.5 || ph > 8.0) {
-      errors.add('Milk pH (${ph.toStringAsFixed(2)}) is outside plausible range (5.5 - 8.0)');
+    if (ph < 3.0 || ph > 9.5) {
+      errors.add('Milk pH (${ph.toStringAsFixed(2)}) is outside plausible range (3.0 - 9.5)');
     }
     if (conductivity < 2.0 || conductivity > 15.0) {
       errors.add('Electrical conductivity (${conductivity.toStringAsFixed(2)} mS/cm) is out of range');

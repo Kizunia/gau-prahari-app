@@ -173,6 +173,19 @@
   "invalidQrFormat": "Invalid QR code format. Please scan a valid Gau-Prahari cattle tag.",
   "simulateScan": "Demo Scan",
   "flash": "Flash",
-  "switchCamera": "Flip",
-  "orScanManual": "Quick Demo Test (Tap to simulate scan):"
+  "orScanManual": "Quick Demo Test (Tap to simulate scan):",
+  "collarHardwareConnection": "Collar Hardware Connection",
+  "connectBluetoothCollar": "Connect Bluetooth Collar (HC-05)",
+  "collarLiveStream": "Live Collar Telemetry",
+  "connectingToCollar": "Connecting to Collar...",
+  "collarConnectedStreaming": "Collar Connected & Streaming",
+  "collarDisconnected": "Collar Disconnected",
+  "simulateCollarStream": "Simulate Live Collar Stream",
+  "selectCollarDevice": "Select Collar Device",
+  "ambientTemp": "Ambient Temp",
+  "accelerometer": "Accelerometer",
+  "tissueContact": "Tissue Contact",
+  "contactDetected": "Contact Detected",
+  "noContact": "No Contact",
+  "syncCollarData": "Capture & Proceed with Collar Data"
 }

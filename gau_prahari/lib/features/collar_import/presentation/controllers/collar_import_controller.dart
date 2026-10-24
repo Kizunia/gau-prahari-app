@@ -81,6 +81,15 @@ class CollarImportController extends ChangeNotifier {
     }
   }
 
+  /// Directly set collar history (e.g. from live Bluetooth stream)
+  void setCollarHistory(CollarHistory history, {required String sourceName}) {
+    _history = history;
+    _sourceName = sourceName;
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
   void clear() {
     _history = null;
     _errorMessage = null;

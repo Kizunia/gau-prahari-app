@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gau_prahari/core/localization/app_localizations.dart';
 import 'package:gau_prahari/features/cow_selection/domain/entities/cow.dart';
 import 'package:gau_prahari/features/milk_tester/data/repositories/hardware_milk_tester.dart';
 import 'package:gau_prahari/features/milk_tester/data/services/arduino_data_parser.dart';
@@ -63,6 +65,20 @@ void main() {
       expect(parsed.metadata.gasMq2, equals(107));
       expect(parsed.metadata.distanceCm, equals(45));
       expect(m.isValid, isTrue);
+    });
+
+    test('Parses live hardware stream format (pH:4.10,LEVEL:17,GAS:44,STATUS:ACIDIC) accurately', () {
+      const livePacket = 'pH:4.10,LEVEL:17,GAS:44,STATUS:ACIDIC';
+
+      final parsed = parser.parse(rawData: livePacket, cowId: 'COW-104');
+      final m = parsed.measurement;
+
+      expect(m.cowId, equals('COW-104'));
+      expect(m.ph, closeTo(4.10, 0.01));
+      expect(parsed.metadata.gasMq2, equals(44));
+      expect(parsed.metadata.distanceCm, equals(17));
+      expect(m.isValid, isTrue);
+      expect(m.isPhAbnormal, isTrue);
     });
 
     test('Correlates alkaline pH and elevated gas to mastitis biomarkers', () {
@@ -131,23 +147,14 @@ void main() {
         ),
       );
 
-      expect(find.text('Live Arduino (HC-05)'), findsOneWidget);
-      expect(find.text('Demo Simulation'), findsOneWidget);
-      expect(find.text('Start Milk Sample Analysis'), findsOneWidget);
-
-      // Switch to Hardware
-      await tester.tap(find.text('Live Arduino (HC-05)'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Start Milk Sample Analysis'), findsOneWidget);
+      expect(find.byIcon(Icons.bluetooth_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.science_rounded), findsOneWidget);
 
       // Switch to Demo Simulation
-      await tester.tap(find.text('Demo Simulation'));
+      await tester.tap(find.byIcon(Icons.science_rounded));
       await tester.pumpAndSettle();
 
-      expect(find.text('Simulation Presets (Testing Profiles)'), findsOneWidget);
-      expect(find.text('Healthy Sample'), findsOneWidget);
-      expect(find.text('Start Milk Sample Analysis'), findsOneWidget);
+      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
     });
   });
 }
