@@ -35,7 +35,7 @@ class MilkTesterScreen extends StatelessWidget {
             child: Text(t.translate('handheldMilkTester')),
           ),
           actions: [
-            const VoiceAssistantButton(),
+            VoiceAssistantButton(screenName: 'milk_tester', contextData: {'cowId': cow.id, 'cowName': cow.displayName, 'breed': cow.breed, 'collarAttached': collarHistory != null}),
             Container(
               margin: const EdgeInsets.only(right: 16),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

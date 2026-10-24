@@ -316,5 +316,36 @@ void main() {
       expect(controller.activeConversation!.id, equals(firstConvId));
       expect(controller.messages.first.content, equals('First query'));
     });
+    test('Scan cow query triggers scan_cow action intent and sets pendingAction', () async {
+      await controller.init(currentOwnerId: 'user_1');
+
+      await controller.submitQuery('Please scan a cow tag', languageCode: 'en');
+      await pumpEventQueue();
+
+      expect(controller.pendingAction, equals('scan_cow'));
+      final assistantMsg = controller.messages.last;
+      expect(assistantMsg.actionName, equals('scan_cow'));
+      expect(assistantMsg.actionStatus, equals('succeeded'));
+
+      controller.clearPendingAction();
+      expect(controller.pendingAction, isNull);
+    });
+
+    test('Screen context is assigned to user and assistant messages', () async {
+      await controller.init(currentOwnerId: 'user_1');
+      controller.setScreenContext(
+        screenName: 'collar_import',
+        contextData: {'cowId': 'COW-104'},
+      );
+
+      await controller.submitQuery('Tell me about this screen', languageCode: 'en');
+      await pumpEventQueue();
+
+      final userMsg = controller.messages.first;
+      final assistantMsg = controller.messages.last;
+      expect(userMsg.screenName, equals('collar_import'));
+      expect(assistantMsg.screenName, equals('collar_import'));
+    });
   });
 }
+

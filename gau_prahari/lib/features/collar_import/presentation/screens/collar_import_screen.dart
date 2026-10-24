@@ -55,7 +55,7 @@ class _CollarImportScreenState extends State<CollarImportScreen> {
             child: Text(t.translate('smartCollarHistory')),
           ),
           actions: [
-            const VoiceAssistantButton(),
+            VoiceAssistantButton(screenName: 'collar_import', contextData: {'cowId': widget.cow.id, 'cowName': widget.cow.displayName, 'breed': widget.cow.breed}),
             Container(
               margin: const EdgeInsets.only(right: 16),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../controllers/voice_assistant_controller.dart';
 import '../screens/voice_assistant_screen.dart';
 
 /// Reusable entry point button for opening the Voice Assistant screen.
@@ -8,8 +10,16 @@ import '../screens/voice_assistant_screen.dart';
 class VoiceAssistantButton extends StatelessWidget {
   final Color? color;
   final double size;
+  final String? screenName;
+  final Map<String, dynamic>? contextData;
 
-  const VoiceAssistantButton({super.key, this.color, this.size = 24.0});
+  const VoiceAssistantButton({
+    super.key,
+    this.color,
+    this.size = 24.0,
+    this.screenName,
+    this.contextData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +43,14 @@ class VoiceAssistantButton extends StatelessWidget {
         ),
       ),
       onPressed: () {
+        if (screenName != null) {
+          try {
+            context.read<VoiceAssistantController>().setScreenContext(
+              screenName: screenName!,
+              contextData: contextData,
+            );
+          } catch (_) {}
+        }
         Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()));

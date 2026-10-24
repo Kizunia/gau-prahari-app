@@ -4,12 +4,15 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/localization/locale_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../cow_selection/presentation/screens/qr_scanner_screen.dart';
+import '../../data/services/ai_assistant_service.dart';
 import '../../domain/entities/chat_message.dart';
 import '../controllers/voice_assistant_controller.dart';
 import '../widgets/conversation_history_sheet.dart';
 
 /// Dedicated voice assistant screen with interactive transcript,
-/// microphone control, multi-state indicators, and conversation management.
+/// microphone control, multi-state indicators, API Key management,
+/// and actionable execution (such as QR scanning).
 class VoiceAssistantScreen extends StatefulWidget {
   const VoiceAssistantScreen({super.key});
 
@@ -62,6 +65,112 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     });
   }
 
+  Future<void> _showApiKeyDialog(
+    BuildContext context,
+    AppLocalizations t,
+  ) async {
+    final aiService = AiAssistantService();
+    final currentKey = await aiService.getApiKey();
+    final controller = TextEditingController(text: currentKey);
+    bool obscure = true;
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.key_rounded, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  t.translate('apiKeyDialogTitle'),
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.translate('apiKeyDialogDescription'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  obscureText: obscure,
+                  decoration: InputDecoration(
+                    labelText: t.translate('apiKeySettings'),
+                    hintText: t.translate('apiKeyHint'),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscure ? Icons.visibility_off : Icons.visibility,
+                        size: 20,
+                      ),
+                      onPressed: () => setState(() => obscure = !obscure),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            if (currentKey.isNotEmpty)
+              TextButton(
+                onPressed: () async {
+                  await AiAssistantService.setApiKey(null);
+                  if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(t.translate('keyCleared'))),
+                    );
+                  }
+                },
+                child: Text(
+                  t.translate('clear'),
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(t.translate('cancel')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final key = controller.text.trim();
+                await AiAssistantService.setApiKey(key.isEmpty ? null : key);
+                if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(t.translate('keySaved'))),
+                  );
+                }
+              },
+              child: Text(t.translate('save')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -73,6 +182,21 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     if (messages.length != _prevMessageCount) {
       _prevMessageCount = messages.length;
       _scrollToBottom();
+    }
+
+    // Auto-dispatch pending action when speaking is finished
+    if (controller.pendingAction == 'scan_cow' &&
+        !controller.isProcessing &&
+        !controller.isSpeaking) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (controller.pendingAction == 'scan_cow') {
+          controller.clearPendingAction();
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+          );
+        }
+      });
     }
 
     return Scaffold(
@@ -99,6 +223,12 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
           ],
         ),
         actions: [
+          // API Key configuration action
+          IconButton(
+            tooltip: t.translate('apiKeySettings'),
+            icon: const Icon(Icons.key_rounded, color: AppColors.primary),
+            onPressed: () => _showApiKeyDialog(context, t),
+          ),
           // History action
           IconButton(
             tooltip: t.translate('conversationHistory'),
@@ -138,7 +268,11 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                           (controller.currentTranscript != null ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index < messages.length) {
-                          return _buildMessageBubble(context, messages[index]);
+                          return _buildMessageBubble(
+                            context,
+                            messages[index],
+                            t,
+                          );
                         } else {
                           // Real-time speech transcript bubble while listening
                           return _buildListeningBubble(
@@ -179,6 +313,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
         break;
       case 'languageNotSupported':
         errorText = t.translate('languageNotSupported');
+        break;
+      case 'processingError':
+        errorText = t.translate('processingError');
         break;
       default:
         errorText = controller.errorMessage!;
@@ -312,7 +449,11 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, ChatMessage message) {
+  Widget _buildMessageBubble(
+    BuildContext context,
+    ChatMessage message,
+    AppLocalizations t,
+  ) {
     final isUser = message.isUser;
 
     return Padding(
@@ -324,10 +465,10 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
+            const CircleAvatar(
               backgroundColor: AppColors.primary,
               radius: 16,
-              child: const Icon(
+              child: Icon(
                 Icons.smart_toy_rounded,
                 color: Colors.white,
                 size: 18,
@@ -380,16 +521,51 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                       fontSize: 11,
                     ),
                   ),
+                  // If an action was identified (e.g. scan_cow), provide direct actionable button
+                  if (!isUser && message.actionName == 'scan_cow') ...[
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      icon: const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        size: 16,
+                      ),
+                      label: Text(
+                        t.translate('scanCowAction'),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const QrScannerScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
           if (isUser) ...[
             const SizedBox(width: 8),
-            CircleAvatar(
+            const CircleAvatar(
               backgroundColor: AppColors.primaryDark,
               radius: 16,
-              child: const Icon(
+              child: Icon(
                 Icons.person_rounded,
                 color: Colors.white,
                 size: 18,
@@ -447,10 +623,10 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
             ),
           ),
           const SizedBox(width: 8),
-          CircleAvatar(
+          const CircleAvatar(
             backgroundColor: AppColors.primaryDark,
             radius: 16,
-            child: const Icon(
+            child: Icon(
               Icons.person_rounded,
               color: Colors.white,
               size: 18,

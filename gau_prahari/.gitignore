@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# AI Configuration (Secret API Keys)
+lib/core/config/ai_config.dart

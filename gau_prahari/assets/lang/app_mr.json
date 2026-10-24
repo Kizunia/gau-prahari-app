@@ -3,7 +3,6 @@
   "appSubtitle": "प्रारंभिक गोवंश मास्टिटिस अंदाज",
   "appVersion": "v1.0.0 (फेरी II)",
   "initializingApp": "गौ-प्रहरी सुरू होत आहे...",
-
   "signIn": "साइन इन",
   "signInSubtitle": "तुमच्या फील्ड टेलिमेट्री आणि दूध निदानात प्रवेश करा",
   "emailOrId": "ईमेल किंवा आयडी",
@@ -16,13 +15,11 @@
   "farmSupervisor": "फार्म पर्यवेक्षक",
   "evaluator": "मूल्यांकनकर्ता",
   "footerText": "स्मार्ट इंडिया हॅकेथॉन • SIH26109\nटीम HealX",
-
   "validatorIdentifierRequired": "कृपया तुमचा ईमेल किंवा अधिकारी/शेतकरी आयडी प्रविष्ट करा",
   "validatorIdentifierMinLength": "ओळखकर्ता किमान 3 अक्षरांचा असावा",
   "validatorPasswordRequired": "कृपया तुमचा पासवर्ड प्रविष्ट करा",
   "validatorPasswordMinLength": "पासवर्ड किमान 4 अक्षरांचा असावा",
   "validatorFieldRequired": "{fieldName} आवश्यक आहे",
-
   "signOut": "साइन आउट",
   "signOutConfirmTitle": "साइन आउट",
   "signOutConfirmMessage": "तुम्हाला खात्री आहे की तुम्ही साइन आउट करू इच्छिता?",
@@ -31,7 +28,6 @@
   "roundII": "फेरी II",
   "nextPhaseInfo": "पुढचा टप्पा: कॉलर इतिहास (CSV/JSON) आयात करण्यासाठी आणि मिल्क टेस्टर जोडण्यासाठी गाय निवडा.",
   "tagPrefix": "टॅग:",
-
   "smartCollarHistory": "स्मार्ट कॉलर इतिहास",
   "longitudinalAnimalTelemetry": "दीर्घकालीन पशू टेलिमेट्री",
   "collarTelemetryDescription": "कॉलर टेलिमेट्री {cowId} साठी 14-दिवसांची वर्तणूक क्रिया, त्वचा तापमान, आणि सभोवतालचा तापमान-आर्द्रता निर्देशांक (THI) ट्रॅक करते.",
@@ -54,7 +50,6 @@
   "ambientTemperature": "सभोवतालचे तापमान",
   "humidity": "आर्द्रता",
   "thiStressIndex": "THI ताण निर्देशांक",
-
   "handheldMilkTester": "हँडहेल्ड मिल्क टेस्टर",
   "liveArduino": "लाइव्ह Arduino (HC-05)",
   "demoSimulation": "डेमो सिम्युलेशन",
@@ -104,7 +99,6 @@
   "analysisError": "विश्लेषण त्रुटी: {error}",
   "mq2Gas": "MQ-2 गॅस: {value}",
   "distanceCm": "अंतर: {value} cm",
-
   "mastitisRiskAssessment": "मास्टिटिस धोका मूल्यांकन",
   "shareReport": "अहवाल शेअर करा",
   "highMastitisRisk": "उच्च मास्टिटिस धोका",
@@ -129,7 +123,6 @@
   "daysAttached": "{count} दिवस जोडले",
   "shareClinicReport": "नैदानिक अहवाल शेअर करा / WhatsApp",
   "doneSelectNext": "पूर्ण आणि पुढचा पशू निवडा",
-
   "exportShareReport": "अहवाल निर्यात आणि शेअर करा",
   "exportShareSubtitle": "पशुवैद्य / सहकारी संस्थेला नैदानिक मास्टिटिस सारांश पाठवा",
   "vetWhatsappNumber": "पशुवैद्य / सहकारी WhatsApp नंबर (ऐच्छिक)",
@@ -143,7 +136,6 @@
   "fullReportCopied": "संपूर्ण नैदानिक निदान अहवाल क्लिपबोर्डवर कॉपी झाला!",
   "viewDiagnosticCertificate": "निदान प्रमाणपत्र कार्ड पहा",
   "viewCertificateSubtitle": "अधिकृत प्रकल्प शिक्क्यासह प्रिंट करण्यायोग्य मेडिकल कार्ड",
-
   "gauPrahariClinicalCard": "गौ-प्रहरी नैदानिक कार्ड",
   "sihDiagnosticTelemetry": "SIH26109 डायग्नोस्टिक टेलिमेट्री",
   "breedPrefix": "जात:",
@@ -160,12 +152,10 @@
   "milkPh": "दूध pH",
   "milkTemp": "दूध तापमान",
   "fatSnf": "वसा / SNF",
-
   "language": "भाषा",
   "english": "English",
   "hindi": "हिन्दी",
   "marathi": "मराठी",
-
   "scanQrCode": "कान टॅग QR स्कॅन करा",
   "scanQrPrompt": "कॅमेरा पशूच्या QR कान टॅग किंवा स्टॉल बॅजवर धरा",
   "cowFetchedSuccess": "पशू {cowId} चा डेटा यशस्वीरित्या प्राप्त झाला!",
@@ -201,7 +191,6 @@
   "lactationStageLabel": "दुग्ध अवस्था",
   "cowIdRequired": "गाय आयडी आवश्यक आहे",
   "editCow": "गाय संपादित करा",
-
   "voiceAssistant": "व्हॉइस असिस्टंट",
   "newConversation": "नवीन संभाषण",
   "conversationHistory": "संभाषण इतिहास",
@@ -221,5 +210,16 @@
   "idleState": "बोलण्यासाठी दाबा",
   "tapToStopListening": "ऐकणे थांबवण्यासाठी दाबा",
   "tapToStopSpeaking": "बोलणे थांबवण्यासाठी दाबा",
-  "typeOrSpeak": "टाइप करा किंवा बोलण्यासाठी माइक दाबा..."
+  "typeOrSpeak": "टाइप करा किंवा बोलण्यासाठी माइक दाबा...",
+  "apiKeySettings": "Gemini API की",
+  "apiKeyDialogTitle": "Gemini API की कॉन्फिगर करा",
+  "apiKeyDialogDescription": "AI प्रतिसाद सक्षम करण्यासाठी Google AI Studio (aistudio.google.com) वरून आपली मोफत Gemini API की प्रविष्ट करा.",
+  "apiKeyHint": "आपली AIzaSy... की येथे पेस्ट करा",
+  "save": "जतन करा",
+  "clear": "साफ करा",
+  "keySaved": "API की यशस्वीरित्या जतन केली",
+  "keyCleared": "API की हटवली",
+  "scanCowAction": "क्युआर स्कॅनर उघडा",
+  "missingApiKeyError": "Gemini API की आवश्यक आहे. ती सेट करण्यासाठी वरील की आयकॉनवर टॅप करा.",
+  "processingError": "विनंती प्रक्रिया करण्यात अक्षम. कृपया इंटरनेट कनेक्शन किंवा Gemini API की तपासा."
 }

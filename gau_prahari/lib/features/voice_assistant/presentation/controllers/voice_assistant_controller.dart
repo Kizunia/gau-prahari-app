@@ -9,7 +9,7 @@ import '../../domain/services/speech_recognition_service.dart';
 enum VoiceAssistantStatus { idle, listening, processing, speaking, error }
 
 /// Controller managing the voice assistant state, speech coordination,
-/// and conversation persistence.
+/// conversation persistence, screen-context, and actionable intents.
 class VoiceAssistantController extends ChangeNotifier {
   final ConversationRepository _conversationRepository;
   final SpeechRecognitionService _speechRecognitionService;
@@ -25,6 +25,9 @@ class VoiceAssistantController extends ChangeNotifier {
   String? _ownerId;
   bool _isInitialized = false;
   int _sessionToken = 0;
+
+  Map<String, dynamic>? _screenContext;
+  String? _pendingAction;
 
   VoiceAssistantController({
     required ConversationRepository conversationRepository,
@@ -45,16 +48,41 @@ class VoiceAssistantController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get ownerId => _ownerId;
   bool get isInitialized => _isInitialized;
+  Map<String, dynamic>? get screenContext => _screenContext;
+  String? get pendingAction => _pendingAction;
 
   bool get isListening => _status == VoiceAssistantStatus.listening;
   bool get isProcessing => _status == VoiceAssistantStatus.processing;
   bool get isSpeaking => _status == VoiceAssistantStatus.speaking;
   bool get isIdle => _status == VoiceAssistantStatus.idle;
 
+  /// Update the current screen context for context-aware assistance.
+  void setScreenContext({
+    required String screenName,
+    Map<String, dynamic>? contextData,
+  }) {
+    _screenContext = {
+      'screenName': screenName,
+      if (contextData != null) ...contextData,
+    };
+    notifyListeners();
+  }
+
+  /// Clear screen context when leaving the workflow.
+  void clearScreenContext() {
+    _screenContext = null;
+    notifyListeners();
+  }
+
+  /// Clear any pending action once dispatched by UI.
+  void clearPendingAction() {
+    _pendingAction = null;
+    notifyListeners();
+  }
+
   /// Initialize the controller for the specified [currentOwnerId].
   /// Restores the last opened conversation if available.
   Future<void> init({String? currentOwnerId}) async {
-    // If owner changed or not yet initialized
     if (_isInitialized && _ownerId == currentOwnerId) return;
 
     _ownerId = currentOwnerId;
@@ -103,6 +131,7 @@ class VoiceAssistantController extends ChangeNotifier {
     _messages = [];
     _currentTranscript = null;
     _errorMessage = null;
+    _pendingAction = null;
     _status = VoiceAssistantStatus.idle;
     notifyListeners();
   }
@@ -129,6 +158,7 @@ class VoiceAssistantController extends ChangeNotifier {
 
     _currentTranscript = null;
     _errorMessage = null;
+    _pendingAction = null;
     _status = VoiceAssistantStatus.idle;
     notifyListeners();
   }
@@ -179,7 +209,6 @@ class VoiceAssistantController extends ChangeNotifier {
     try {
       final hasPerm = await _speechRecognitionService.hasPermission();
       if (!hasPerm) {
-        // Try initializing which requests permission if needed
         final ok = await _speechRecognitionService.initialize();
         if (!ok) {
           if (_sessionToken == currentSession) {
@@ -273,6 +302,24 @@ class VoiceAssistantController extends ChangeNotifier {
     );
   }
 
+  String? _detectAction(String query, String rawReply) {
+    if (rawReply.contains('[ACTION:scan_cow]')) return 'scan_cow';
+    final q = query.toLowerCase();
+    if (q.contains('scan cow') ||
+        q.contains('scan a cow') ||
+        q.contains('qr scan') ||
+        q.contains('scan qr') ||
+        q.contains('open scanner') ||
+        q.contains('open qr') ||
+        q.contains('गाय स्कैन') ||
+        q.contains('स्कैनर खोलो') ||
+        q.contains('गाय स्कॅन') ||
+        q.contains('स्कॅनर उघडा')) {
+      return 'scan_cow';
+    }
+    return null;
+  }
+
   Future<void> _processQuery(
     String query, {
     required String languageCode,
@@ -315,6 +362,7 @@ class VoiceAssistantController extends ChangeNotifier {
         role: 'user',
         content: cleanQuery,
         createdAt: now,
+        screenName: _screenContext?['screenName'] as String?,
       );
       final savedUserMsg = await _conversationRepository.addMessage(
         userMessage,
@@ -322,15 +370,20 @@ class VoiceAssistantController extends ChangeNotifier {
       _messages.add(savedUserMsg);
       notifyListeners();
 
-      // 3. Generate response using local responder
-      final replyText = await _responder.respond(
+      // 3. Generate response using responder (Gemini or Local)
+      final rawReply = await _responder.respond(
         query: cleanQuery,
         languageCode: languageCode,
         conversationContext: _messages,
+        screenContext: _screenContext,
       );
 
       // Verify session wasn't cancelled while processing
       if (_sessionToken != sessionToken) return;
+
+      final detectedAction = _detectAction(cleanQuery, rawReply);
+      final replyText = rawReply.replaceAll('[ACTION:scan_cow]', '').trim();
+      _pendingAction = detectedAction;
 
       // 4. Persist assistant response
       final assistantMessage = ChatMessage(
@@ -339,6 +392,9 @@ class VoiceAssistantController extends ChangeNotifier {
         role: 'assistant',
         content: replyText,
         createdAt: DateTime.now().toUtc().millisecondsSinceEpoch,
+        screenName: _screenContext?['screenName'] as String?,
+        actionName: detectedAction,
+        actionStatus: detectedAction != null ? 'succeeded' : null,
       );
       final savedAssistantMsg = await _conversationRepository.addMessage(
         assistantMessage,

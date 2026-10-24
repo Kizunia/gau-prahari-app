@@ -50,7 +50,7 @@ class AnalysisResultScreen extends StatelessWidget {
           child: Text(t.translate('mastitisRiskAssessment')),
         ),
         actions: [
-          const VoiceAssistantButton(),
+          VoiceAssistantButton(screenName: 'analysis_result', contextData: {'cowId': cow.id, 'cowName': cow.displayName, 'riskLevel': result.riskLevel, 'probability': result.probability, 'factors': result.factors, 'recommendedAction': result.recommendedAction}),
           IconButton(
             tooltip: t.translate('shareReport'),
             icon: const Icon(Icons.share_rounded, color: AppColors.primary),
