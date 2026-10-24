@@ -29,6 +29,19 @@ This directory contains the technical specification for the Gau-Prahari applicat
 
 - [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 
+### Voice Assistant
+
+The Flutter voice-assistant MVP is specified separately. It uses local SQLite conversation history, speech input/output, the selected app language, and allowlisted actions against existing app screens.
+
+- [Voice Assistant Specification](./voice-assistant/README.md)
+- [Architecture](./voice-assistant/ARCHITECTURE.md)
+- [Conversation Storage](./voice-assistant/CONVERSATION_STORAGE.md)
+- [AI Integration](./voice-assistant/AI_INTEGRATION.md)
+- [Voice and Localization](./voice-assistant/VOICE_AND_LOCALIZATION.md)
+- [Actions and Screen Context](./voice-assistant/ACTIONS_AND_CONTEXT.md)
+- [Implementation Plan](./voice-assistant/IMPLEMENTATION_PLAN.md)
+- [Testing and Acceptance](./voice-assistant/TESTING_AND_ACCEPTANCE.md)
+
 ---
 
 ## Current Prototype
@@ -85,3 +98,5 @@ before replacing it with:
     BleMilkTester
 
 The rest of the application must not depend on the hardware implementation.
+
+> **Documentation note:** The prototype exclusions and scope described above capture an earlier Round II snapshot. For feature availability and integration decisions, inspect the current Flutter source; newer code may already implement some listed items.
