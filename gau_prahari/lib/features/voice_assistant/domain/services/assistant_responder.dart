@@ -8,5 +8,6 @@ abstract class AssistantResponder {
     required String query,
     required String languageCode,
     List<ChatMessage>? conversationContext,
+    String? requestId,
   });
 }

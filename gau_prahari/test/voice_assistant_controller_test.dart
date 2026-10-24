@@ -21,6 +21,7 @@ class FakeSpeechRecognitionService implements SpeechRecognitionService {
   int startListeningCallCount = 0;
   int stopListeningCallCount = 0;
   int cancelListeningCallCount = 0;
+  Function()? onStop;
 
   @override
   bool get isListening => _isListening;
@@ -58,6 +59,7 @@ class FakeSpeechRecognitionService implements SpeechRecognitionService {
   Future<void> stopListening() async {
     stopListeningCallCount++;
     _isListening = false;
+    onStop?.call();
   }
 
   @override
@@ -119,18 +121,21 @@ class FakeSpeechOutputService implements SpeechOutputService {
 class FakeAssistantResponder implements AssistantResponder {
   final calls =
       <({String query, String languageCode, List<ChatMessage>? context})>[];
+  final requestIds = <String?>[];
 
   @override
   Future<String> respond({
     required String query,
     required String languageCode,
     List<ChatMessage>? conversationContext,
+    String? requestId,
   }) async {
     calls.add((
       query: query,
       languageCode: languageCode,
       context: conversationContext,
     ));
+    requestIds.add(requestId);
     return 'Test AI reply';
   }
 }
@@ -143,7 +148,7 @@ void main() {
   late ConversationRepository repository;
   late FakeSpeechRecognitionService fakeRecognition;
   late FakeSpeechOutputService fakeOutput;
-  late AssistantResponder responder;
+  late FakeAssistantResponder responder;
   late VoiceAssistantController controller;
 
   setUp(() async {
@@ -314,6 +319,117 @@ void main() {
         // Attempt second start while already listening - should be ignored
         await controller.startListening(languageCode: 'en');
         expect(fakeRecognition.startListeningCallCount, equals(1));
+      },
+    );
+
+    test('final result delivered during stop is processed only once', () async {
+      await controller.init(currentOwnerId: 'farmer_1');
+      await controller.startListening(languageCode: 'mr');
+      fakeRecognition.simulateSpeech('गायीला पाणी द्या', isFinal: false);
+      fakeRecognition.onStop = () {
+        fakeRecognition.simulateSpeech('गायीला पाणी द्या', isFinal: true);
+      };
+
+      await controller.stopListening();
+      await pumpEventQueue();
+
+      expect(responder.calls, hasLength(1));
+      expect(
+        controller.messages.where((message) => message.role == 'user'),
+        hasLength(1),
+      );
+      expect(
+        controller.messages.where((message) => message.role == 'assistant'),
+        hasLength(1),
+      );
+      expect(responder.calls.single.languageCode, 'mr');
+      expect(responder.requestIds.single, isNotNull);
+    });
+
+    test(
+      'final result followed by stopListening is not submitted again',
+      () async {
+        await controller.init(currentOwnerId: 'farmer_1');
+        await controller.startListening(languageCode: 'hi');
+
+        fakeRecognition.simulateSpeech('गाय को पानी चाहिए', isFinal: true);
+        await controller.stopListening();
+        await pumpEventQueue();
+
+        expect(fakeRecognition.stopListeningCallCount, 1);
+        expect(responder.calls, hasLength(1));
+        expect(
+          controller.messages.where((message) => message.role == 'user'),
+          hasLength(1),
+        );
+        expect(
+          controller.messages.where((message) => message.role == 'assistant'),
+          hasLength(1),
+        );
+      },
+    );
+
+    test(
+      'repeated final callbacks for one listening session are ignored',
+      () async {
+        await controller.init(currentOwnerId: 'farmer_1');
+        await controller.startListening(languageCode: 'en');
+
+        fakeRecognition.simulateSpeech('Check the water', isFinal: true);
+        fakeRecognition.simulateSpeech('Check the water', isFinal: true);
+        fakeRecognition.simulateSpeech('Check the water again', isFinal: true);
+        await controller.stopListening();
+        await pumpEventQueue();
+
+        expect(responder.calls, hasLength(1));
+        expect(
+          controller.messages.where((message) => message.role == 'user'),
+          hasLength(1),
+        );
+        expect(
+          controller.messages.where((message) => message.role == 'assistant'),
+          hasLength(1),
+        );
+        expect(responder.requestIds.single, isNotNull);
+      },
+    );
+
+    test(
+      'separate deliberate questions still submit as separate interactions',
+      () async {
+        await controller.init(currentOwnerId: 'farmer_1');
+
+        await controller.submitQuery('First question', languageCode: 'en');
+        await controller.submitQuery('Second question', languageCode: 'en');
+
+        expect(responder.calls.map((call) => call.query), [
+          'First question',
+          'Second question',
+        ]);
+        expect(
+          controller.messages.where((message) => message.role == 'user'),
+          hasLength(2),
+        );
+        expect(
+          controller.messages.where((message) => message.role == 'assistant'),
+          hasLength(2),
+        );
+        expect(responder.requestIds.toSet(), hasLength(2));
+      },
+    );
+
+    test(
+      'stopping without a final result submits partial text in selected language',
+      () async {
+        await controller.init(currentOwnerId: 'farmer_1');
+        await controller.startListening(languageCode: 'mr');
+        fakeRecognition.simulateSpeech('गायीची काळजी घ्या', isFinal: false);
+
+        await controller.stopListening();
+
+        expect(responder.calls, hasLength(1));
+        expect(responder.calls.single.languageCode, 'mr');
+        expect(fakeOutput.spokenLanguages.single, 'mr');
       },
     );
 

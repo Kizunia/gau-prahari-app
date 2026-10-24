@@ -12,22 +12,22 @@ The interface should be simple, readable, and suitable for people who are not hi
 
 ## Agreed decisions
 
-| Area | Decision |
-|---|---|
-| Client | Flutter/Dart |
-| State management | Existing Provider and ChangeNotifier approach |
-| Speech recognition | speech_to_text |
-| Text-to-speech | flutter_tts |
-| Conversation persistence | SQLite using sqflite and path |
-| Language | Current LocaleController selection: English (en), Hindi (hi), or Marathi (mr) |
-| AI provider | Google Gemini API |
-| Initial model | gemini-3.8-flash; verify access and current API contract before implementation |
-| HTTP | Existing http dependency |
-| App actions | Fixed Flutter-side allowlist |
-| Assistant backend | No new FastAPI endpoint |
-| Existing inference backend | Leave the current FastAPI mastitis prediction flow unchanged |
-| API key | Local Git-ignored Dart config for controlled hackathon demo; exposure in built APK is accepted |
-| Scope | Demonstration MVP, not production-ready software |
+| Area                       | Decision                                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Client                     | Flutter/Dart                                                                                   |
+| State management           | Existing Provider and ChangeNotifier approach                                                  |
+| Speech recognition         | speech_to_text                                                                                 |
+| Text-to-speech             | flutter_tts                                                                                    |
+| Conversation persistence   | SQLite using sqflite and path                                                                  |
+| Language                   | Current LocaleController selection: English (en), Hindi (hi), or Marathi (mr)                  |
+| AI provider                | Google Gemini API                                                                              |
+| Initial model              | gemini-2.5-flash; verify access and current API contract before implementation                 |
+| HTTP                       | Existing http dependency                                                                       |
+| App actions                | Fixed Flutter-side allowlist                                                                   |
+| Assistant backend          | No new FastAPI endpoint                                                                        |
+| Existing inference backend | Leave the current FastAPI mastitis prediction flow unchanged                                   |
+| API key                    | Local Git-ignored Dart config for controlled hackathon demo; exposure in built APK is accepted |
+| Scope                      | Demonstration MVP, not production-ready software                                               |
 
 ## Four-phase implementation order
 
