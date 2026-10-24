@@ -1,3 +1,4 @@
+import '../../../appointment_booking/presentation/screens/veterinarian_directory_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:gau_prahari/core/constants/app_colors.dart';
 import 'package:gau_prahari/shared/widgets/custom_button.dart';
@@ -178,6 +179,24 @@ class AnalysisResultScreen extends StatelessWidget {
               icon: Icons.medical_services_rounded,
               backgroundColor: const Color(0xFF1565C0),
               onPressed: () => _handleVetReview(context),
+            ),
+            const SizedBox(height: 12),
+
+            // Action: Book Veterinarian Consultation
+            CustomButton(
+              text: 'Book Veterinarian Consultation',
+              icon: Icons.calendar_month_rounded,
+              backgroundColor: AppColors.primary,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => VeterinarianDirectoryScreen(
+                      preselectedCowId: cow.id,
+                      preselectedCowTag: cow.tagNumber,
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 12),
 

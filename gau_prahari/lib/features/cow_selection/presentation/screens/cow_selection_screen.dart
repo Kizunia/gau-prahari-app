@@ -421,43 +421,97 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          CircleAvatar(
-            backgroundColor: AppColors.primary,
-            radius: 22,
-            child: Text(
-              user.name.isNotEmpty ? user.name[0] : 'U',
-              style: const TextStyle(
-                color: AppColors.textLight,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.primary,
+                radius: 22,
+                child: Text(
+                  user.name.isNotEmpty ? user.name[0] : 'U',
+                  style: const TextStyle(
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${user.role} • ${user.identifier}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primaryAccent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryDark,
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const VeterinarianDirectoryScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                  label: const Text(
+                    'Book Vet',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${user.role} • ${user.identifier}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primaryAccent,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FarmerAppointmentsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.event_note_rounded, size: 16),
+                  label: const Text(
+                    'Appointments',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

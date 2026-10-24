@@ -1,3 +1,5 @@
+import '../../../appointment_booking/presentation/screens/veterinarian_directory_screen.dart';
+import '../../../appointment_booking/presentation/screens/farmer_appointments_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -113,6 +115,30 @@ class _FarmerReviewRequestsScreenState
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('My Review Requests'),
+        actions: [
+          IconButton(
+            tooltip: 'Book Veterinarian',
+            icon: const Icon(Icons.calendar_month_rounded, color: AppColors.primary),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const VeterinarianDirectoryScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: 'My Appointments',
+            icon: const Icon(Icons.event_note_rounded, color: AppColors.primary),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const FarmerAppointmentsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: user == null

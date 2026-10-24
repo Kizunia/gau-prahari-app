@@ -389,6 +389,29 @@ class _VeterinarianAvailabilityScreenState
           );
         }
 
+        if (snapshot.hasError) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, color: AppColors.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Error loading slots: ${snapshot.error}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.error),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         final slots = snapshot.data ?? [];
         if (slots.isEmpty) {
           return Container(

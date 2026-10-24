@@ -106,9 +106,8 @@ class GauPrahariApp extends StatelessWidget {
         Provider<AppointmentRepository>(
           create: (context) {
             final auth = context.read<AuthController>();
-            final isDemo = auth.currentUser?.isDemo == true;
             return appointmentRepository ??
-                FirestoreAppointmentRepository(isDemo: isDemo);
+                FirestoreAppointmentRepository(authController: auth);
           },
         ),
       ],

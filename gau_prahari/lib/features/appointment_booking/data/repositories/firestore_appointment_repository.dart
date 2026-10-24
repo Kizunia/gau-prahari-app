@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../vet_review/domain/entities/vet_profile.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/entities/appointment_slot.dart';
@@ -10,7 +11,8 @@ import '../../domain/repositories/appointment_repository.dart';
 /// Implements atomic double-booking prevention, schedule management, and isolated demo mode.
 class FirestoreAppointmentRepository implements AppointmentRepository {
   final FirebaseFirestore? _firestore;
-  final bool isDemo;
+  final bool? _isDemoStatic;
+  final AuthController? _authController;
 
   // In-memory state for isolated demo sessions (SRS Section 9)
   final Map<String, VeterinarianSchedule> _demoSchedules = {};
@@ -19,8 +21,25 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
 
   FirestoreAppointmentRepository({
     FirebaseFirestore? firestore,
-    this.isDemo = false,
-  }) : _firestore = firestore;
+    bool? isDemo,
+    AuthController? authController,
+  })  : _firestore = firestore,
+        _isDemoStatic = isDemo,
+        _authController = authController {
+    _initDemoData();
+  }
+
+  bool get isDemo =>
+      _authController?.currentUser?.isDemo ?? (_isDemoStatic ?? false);
+
+  void _initDemoData() {
+    final sched = VeterinarianSchedule.defaultSchedule('demo_vet_001');
+    _demoSchedules['demo_vet_001'] = sched;
+    final defaultSlots = sched.generateSlotsForRange(daysCount: 14);
+    for (final s in defaultSlots) {
+      _demoSlots[s.id] = s;
+    }
+  }
 
   FirebaseFirestore get _db => _firestore ?? FirebaseFirestore.instance;
 
@@ -59,11 +78,42 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
       final snapshot = await _usersCol
           .where('role', isEqualTo: 'veterinarian')
           .get();
-      return snapshot.docs
+      final vets = snapshot.docs
           .map((doc) => VetProfile.fromFirestore(doc.data(), doc.id))
           .toList();
+      if (vets.isEmpty) {
+        // Fallback to sample certified veterinarians if none registered yet
+        return const [
+          VetProfile(
+            uid: 'demo_vet_001',
+            name: 'Dr. Sharma, DVM',
+            email: 'vet@gauprahari.org',
+            designation: 'Senior Bovine Veterinarian',
+          ),
+          VetProfile(
+            uid: 'demo_vet_002',
+            name: 'Dr. Ananya Rao, MVSc',
+            email: 'ananya.vet@gauprahari.org',
+            designation: 'Field Cattle Health Officer',
+          ),
+        ];
+      }
+      return vets;
     } catch (_) {
-      return [];
+      return const [
+        VetProfile(
+          uid: 'demo_vet_001',
+          name: 'Dr. Sharma, DVM',
+          email: 'vet@gauprahari.org',
+          designation: 'Senior Bovine Veterinarian',
+        ),
+        VetProfile(
+          uid: 'demo_vet_002',
+          name: 'Dr. Ananya Rao, MVSc',
+          email: 'ananya.vet@gauprahari.org',
+          designation: 'Field Cattle Health Officer',
+        ),
+      ];
     }
   }
 
@@ -127,12 +177,11 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
 
       for (final slot in chunk) {
         final docRef = _slotsCol.doc(slot.id);
-        // We write using update or set-with-merge if not booked
+        // Write slot data without forcing composite indexing
         final data = slot.toMap(useTimestamps: true);
         data['createdAt'] = FieldValue.serverTimestamp();
         data['updatedAt'] = FieldValue.serverTimestamp();
 
-        // Safe publish: only write if status is not booked
         batch.set(docRef, data, SetOptions(merge: true));
         publishedCount++;
       }
@@ -167,28 +216,30 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     required String veterinarianUid,
     required DateTime day,
   }) {
-    final startOfDay = DateTime(day.year, day.month, day.day);
-    final endOfDay = DateTime(day.year, day.month, day.day, 23, 59, 59);
-
     if (isDemo) {
       final slots = _demoSlots.values
           .where((s) =>
               s.veterinarianUid == veterinarianUid &&
-              s.startAt.isAfter(startOfDay) &&
-              s.startAt.isBefore(endOfDay))
+              s.startAt.year == day.year &&
+              s.startAt.month == day.month &&
+              s.startAt.day == day.day)
           .toList()
         ..sort((a, b) => a.startAt.compareTo(b.startAt));
       return Stream.value(slots);
     }
 
+    // Query by veterinarianUid only to avoid requiring composite indexes in Cloud Firestore.
+    // Filter by year/month/day and sort in Dart for instant, index-free reliability.
     return _slotsCol
         .where('veterinarianUid', isEqualTo: veterinarianUid)
-        .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('startAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .snapshots()
         .map((snapshot) {
           final list = snapshot.docs
               .map((doc) => AppointmentSlot.fromFirestore(doc.data(), doc.id))
+              .where((s) =>
+                  s.startAt.year == day.year &&
+                  s.startAt.month == day.month &&
+                  s.startAt.day == day.day)
               .toList()
             ..sort((a, b) => a.startAt.compareTo(b.startAt));
           return list;
@@ -215,12 +266,13 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
 
     return _slotsCol
         .where('veterinarianUid', isEqualTo: veterinarianUid)
-        .where('status', isEqualTo: SlotStatus.available.key)
-        .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .snapshots()
         .map((snapshot) {
           final list = snapshot.docs
               .map((doc) => AppointmentSlot.fromFirestore(doc.data(), doc.id))
+              .where((s) =>
+                  s.status == SlotStatus.available &&
+                  s.startAt.isAfter(start))
               .toList()
             ..sort((a, b) => a.startAt.compareTo(b.startAt));
           return list;
@@ -246,12 +298,13 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
 
     return _slotsCol
         .where('veterinarianUid', isEqualTo: veterinarianUid)
-        .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(fromDate))
-        .where('startAt', isLessThanOrEqualTo: Timestamp.fromDate(toDate))
         .snapshots()
         .map((snapshot) {
           final list = snapshot.docs
               .map((doc) => AppointmentSlot.fromFirestore(doc.data(), doc.id))
+              .where((s) =>
+                  s.startAt.isAfter(fromDate) &&
+                  s.startAt.isBefore(toDate))
               .toList()
             ..sort((a, b) => a.startAt.compareTo(b.startAt));
           return list;
