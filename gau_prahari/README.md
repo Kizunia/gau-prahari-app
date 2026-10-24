@@ -1,5 +1,14 @@
 # gau_prahari
 
+## Voice assistant Gemini setup
+
+The assistant uses Google's Gemini API directly for the SIH demo. After a fresh
+clone, copy `lib/core/config/ai_config.example.dart` to
+`lib/core/config/ai_config.dart` and put the demo key in `geminiApiKey`. The real
+config file is ignored by Git. Leave the key blank to run analyzer and tests;
+tests use fake responders and do not contact Gemini. A key embedded in a demo
+APK can be extracted, so use a restricted demo key and rotate it after the event.
+
 A new Flutter project.
 
 ## Getting Started

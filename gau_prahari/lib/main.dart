@@ -15,7 +15,7 @@ import 'features/cow_selection/presentation/screens/cow_selection_screen.dart';
 import 'features/voice_assistant/data/repositories/conversation_repository_impl.dart';
 import 'features/voice_assistant/data/services/speech_output_service_impl.dart';
 import 'features/voice_assistant/data/services/speech_recognition_service_impl.dart';
-import 'features/voice_assistant/data/services/temporary_local_responder.dart';
+import 'features/voice_assistant/data/services/ai_assistant_service.dart';
 import 'features/voice_assistant/domain/repositories/conversation_repository.dart';
 import 'features/voice_assistant/presentation/controllers/voice_assistant_controller.dart';
 
@@ -76,7 +76,7 @@ class GauPrahariApp extends StatelessWidget {
                 conversationRepository: context.read<ConversationRepository>(),
                 speechRecognitionService: SpeechRecognitionServiceImpl(),
                 speechOutputService: SpeechOutputServiceImpl(),
-                responder: const TemporaryLocalResponder(),
+                responder: AiAssistantService(),
               ),
         ),
       ],

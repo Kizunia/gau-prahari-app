@@ -322,17 +322,23 @@ class VoiceAssistantController extends ChangeNotifier {
       _messages.add(savedUserMsg);
       notifyListeners();
 
-      // 3. Generate response using local responder
+      // 3. Load only the active conversation's latest 20 messages for Gemini.
+      final recentMessages = await _conversationRepository.getRecentMessages(
+        _activeConversation!.id,
+        limit: 20,
+      );
+
+      // 4. Generate a response; the responder uses no app actions in Phase 2.
       final replyText = await _responder.respond(
         query: cleanQuery,
         languageCode: languageCode,
-        conversationContext: _messages,
+        conversationContext: recentMessages,
       );
 
       // Verify session wasn't cancelled while processing
       if (_sessionToken != sessionToken) return;
 
-      // 4. Persist assistant response
+      // 5. Persist assistant response (including a clear service fallback).
       final assistantMessage = ChatMessage(
         id: '',
         conversationId: _activeConversation!.id,
@@ -346,7 +352,7 @@ class VoiceAssistantController extends ChangeNotifier {
       _messages.add(savedAssistantMsg);
       await _loadPreviousConversations();
 
-      // 5. Speak response aloud
+      // 6. Speak response aloud
       _status = VoiceAssistantStatus.speaking;
       notifyListeners();
 
