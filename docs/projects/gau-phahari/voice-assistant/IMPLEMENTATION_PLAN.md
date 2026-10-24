@@ -1,122 +1,46 @@
 # Voice Assistant Implementation Plan
 
-## Development rule
+**Canonical phase plan:** [FOUR_PHASE_IMPLEMENTATION.md](./FOUR_PHASE_IMPLEMENTATION.md)
 
-Follow the repository's existing **inspect → implement → test → verify** workflow. Deliver one working vertical slice at a time. Do not redesign the application, change the mastitis model, or add an assistant backend.
+Implement exactly four phases. Each phase has its own scope, manual test procedure, and acceptance criteria in the canonical guide. The owner tests the app and explicitly accepts a phase before the next phase begins.
 
-## Phase 0 — Inspect the current source
+## Phase 1 — Voice foundation and local history
 
-Before editing code:
+Deliver the assistant screen and authenticated entry point; speech-to-text; text-to-speech; the selected app language; SQLite conversations/messages; history list and reopen; New conversation; restore the last-opened conversation; and a temporary local responder.
 
-- Inspect `main.dart`, Provider setup, `AuthGate`, and `LocaleController`.
-- Inspect the current QR scanner and cow-selection navigation.
-- Inspect the existing Cow, collar, milk measurement, and analysis-result entities/controllers.
-- Inspect Android/iOS manifests and current test structure.
-- Check `gau_prahari/.gitignore` and confirm the proposed local config file is not already tracked.
-- Confirm the selected speech packages support the project's Flutter/Dart version and target device.
+**Not included:** Gemini integration or app actions.
 
-**Exit criterion:** A short implementation note records which existing classes/screens will be reused and any differences from this specification.
+**Gate:** manual voice and persistence tests pass on the Android device; analyzer/tests pass or failures are explained.
 
-## Phase 1 — Add models and SQLite persistence
+## Phase 2 — Gemini AI integration
 
-Implement the conversation/message models, SQLite database, schema migration, and conversation repository described in [Conversation storage](./CONVERSATION_STORAGE.md).
+Replace the local responder with Gemini using gemini-3.8-flash after verifying current model and REST API details. Add local Git-ignored config plus a tracked placeholder example; send up to 20 recent messages, current selected language, and the new transcript once; handle API errors.
 
-- Create/load a conversation.
-- Insert user and assistant messages.
-- Retrieve the last 20 messages in chronological order.
-- Update conversation timestamps.
-- Persist optional action name/outcome.
-- Separate histories by local current-user identifier if one is available.
+**Not included:** action execution.
 
-**Test before proceeding:** repository/database tests cover create, insert, reload after reopen, ordering, and conversation deletion if implemented.
+**Gate:** real responses and follow-ups work; history survives restart; failures retain transcripts; key is not tracked; no action executes.
 
-## Phase 2 — Add speech input/output wrappers
+## Phase 3 — First app action
 
-Add the speech-recognition and TTS packages at compatible versions. Implement services independent of UI widgets.
+Implement typed response parsing and a fixed allowlist with scan_cow as the only executable action. Reuse QrScannerScreen and keep the normal navigation/back stack.
 
-- Read the current locale from the existing `LocaleController`.
-- Map `en`, `hi`, and `mr` to supported recognition/TTS locale identifiers.
-- Handle permission denial, unavailable locale, no speech, cancellation, and TTS errors.
-- Expose explicit controller states.
+**Not included:** broader screen context or additional actions.
 
-**Test before proceeding:** unit/widget tests exercise state transitions where possible, plus manual checks on the target Android device.
+**Gate:** manual voice command opens the actual scanner and all invalid/unknown actions are rejected.
 
-## Phase 3 — Create the assistant controller and response model
+## Phase 4 — Screen awareness and final verification
 
-Implement a typed internal assistant result and controller.
+Provide explicit current-screen context from actual app state; add contextual explanations for cow selection, collar import, milk tester, and analysis result where real data is available; finalize localized errors and regression testing.
 
-- Accept a finalized recognized transcript.
-- Save it to SQLite before making the AI call.
-- Retrieve the recent conversation window.
-- Attach language and compact screen context.
-- Call an injectable `AiAssistantService`.
-- Parse and validate the response.
-- Save and speak the reply.
-- Handle timeout/network/invalid-response failures without crashing.
+**Gate:** answers match actual screen data, stale/missing data is handled honestly, and the voice/history/action flow plus existing app workflows pass regression checks.
 
-The provider/model choice must be finalized before implementing the provider-specific request.
+## Shared rules
 
-**Test before proceeding:** use a fake AI service; do not require an API key for tests.
-
-## Phase 4 — Build the AI HTTP adapter and demo configuration
-
-- Implement the selected provider in `AiAssistantService`.
-- Add `lib/core/config/ai_config.dart` locally and ignore it in `gau_prahari/.gitignore`.
-- Add a tracked `ai_config.example.dart` containing placeholders only.
-- Reuse the current HTTP dependency.
-- Apply a request timeout and typed error mapping.
-- Ensure logs never include secrets.
-
-**Test before proceeding:** parsing/configuration tests plus a manual valid request with a locally supplied key. No working key should be committed.
-
-## Phase 5 — Add the authenticated voice entry point and first action
-
-- Make the button available across authenticated app screens while keeping login screens free of it.
-- Integrate with the existing navigation implementation using the smallest viable mechanism.
-- Register only the `scan_cow` action initially.
-- Reuse the existing `QrScannerScreen`.
-- Speak and store confirmation only after the action handler has been invoked.
-- Store the action result with conversation history.
-
-**Exit criterion:** the end-to-end “Scan a cow” scenario works on the target Android device in the selected language.
-
-## Phase 6 — Add screen-aware explanations
-
-- Introduce compact, accurate current-screen context.
-- Start with the cow-selection screen and selected-cow state.
-- Add explanations for milk tester and analysis result only after their existing state/models are inspected and made available.
-- Implement the P1/P2 action entries only when their existing callbacks and preconditions are verified.
-- Keep all action execution behind the allowlist.
-
-**Exit criterion:** a contextual question uses current app state and does not hallucinate unavailable values or actions.
-
-## Phase 7 — Verify acceptance and document setup
-
-- Run formatter and Flutter analyzer.
-- Run unit/widget tests without a live API key.
-- Test on the actual Android demo device with permissions granted and denied.
-- Test English, Hindi, and Marathi where the device speech services support them.
-- Test app restart, history persistence, new conversation, and AI/network failure paths.
-- Review the Git diff to ensure no API secret or unrelated code change is included.
-
-See [Testing and acceptance](./TESTING_AND_ACCEPTANCE.md).
-
-## Required dependency additions
-
-Evaluate compatible versions of:
-
-- `sqflite`
-- `path`
-- `speech_to_text`
-- `flutter_tts`
-
-The project already uses `provider`, `shared_preferences`, and `http`; reuse these unless a concrete need is found. Do not add a state-management framework or backend dependency for this feature.
-
-## Non-goals during implementation
-
-- Do not modify the current FastAPI inference API.
-- Do not introduce a new backend for the voice assistant.
-- Do not refactor unrelated screens.
-- Do not replace existing repositories/controllers when they can be reused.
-- Do not add unverified voice commands or arbitrary actions.
-- Do not claim the API key is secure merely because the Dart file is ignored by Git.
+- Inspect the current code before writing. Do not trust older prototype documentation over actual source.
+- Keep the existing Provider/ChangeNotifier approach and direct navigation unless a limited change is demonstrably needed.
+- Do not change FastAPI or the existing ML model.
+- Do not implement a later phase early.
+- Test with injectable/fake AI and speech services where automated tests are appropriate.
+- Keep the actual API key out of Git; the demo owner accepts APK extraction risk.
+- Report the precise files changed and tests actually run.
+- The coding agent must stop at each phase gate and wait for the owner's acceptance.

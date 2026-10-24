@@ -1,98 +1,70 @@
 # Gau-Prahari Voice Assistant
 
-**Document status:** Implementation specification  
+**Status:** Implementation specification  
 **Scope:** Hackathon demonstration MVP  
-**Code status:** Documentation only; application implementation is a separate step
+**Implementation mode:** Four gated phases; one phase is implemented and manually accepted before the next begins.
 
-## 1. Purpose
+## Purpose
 
-Add a voice assistant to the existing Gau-Prahari Flutter application so a farmer can ask for help in plain language, hear a spoken response, and perform a small set of supported actions without needing to navigate every screen manually.
+Add a spoken assistant to the existing Gau-Prahari Flutter app so farmers can ask for help in their current app language, hear spoken responses, revisit past conversations, and gradually use supported voice commands to operate the existing workflow.
 
-The experience is intended for digitally less-literate users. Instructions should be concise, friendly, sequential, and expressed in the language currently selected in the app.
+The interface should be simple, readable, and suitable for people who are not highly familiar with smartphone apps.
 
-## 2. Agreed decisions
+## Agreed decisions
 
 | Area | Decision |
 |---|---|
-| Client architecture | Implement the assistant feature in Flutter/Dart |
-| State management | Reuse the project's existing Provider and `ChangeNotifier` approach |
-| Speech input | Use a Flutter speech-recognition package, proposed: `speech_to_text` |
-| Spoken output | Use Flutter text-to-speech, proposed: `flutter_tts` |
-| Conversation persistence | SQLite on the device, proposed: `sqflite` |
-| Language | Follow the current `LocaleController` setting; no language auto-detection in this phase |
-| AI reasoning | Call a hosted AI API directly from Flutter |
-| Assistant backend | Do not add a new FastAPI endpoint for the assistant |
-| Existing inference backend | Leave the current FastAPI mastitis-prediction flow unchanged |
-| App actions | Execute only allowlisted actions that map to existing screens/controllers |
-| Credentials | Use a local, Git-ignored Dart config file for the hackathon build, plus a tracked empty example |
-| Scope | Optimize for a working demo, not production readiness |
+| Client | Flutter/Dart |
+| State management | Existing Provider and ChangeNotifier approach |
+| Speech recognition | speech_to_text |
+| Text-to-speech | flutter_tts |
+| Conversation persistence | SQLite using sqflite and path |
+| Language | Current LocaleController selection: English (en), Hindi (hi), or Marathi (mr) |
+| AI provider | Google Gemini API |
+| Initial model | gemini-3.8-flash; verify access and current API contract before implementation |
+| HTTP | Existing http dependency |
+| App actions | Fixed Flutter-side allowlist |
+| Assistant backend | No new FastAPI endpoint |
+| Existing inference backend | Leave the current FastAPI mastitis prediction flow unchanged |
+| API key | Local Git-ignored Dart config for controlled hackathon demo; exposure in built APK is accepted |
+| Scope | Demonstration MVP, not production-ready software |
 
-The hosted AI provider and model have not been selected yet. Keep the provider-specific HTTP request and response parsing behind a small service adapter so the choice is contained in one place.
+## Four-phase implementation order
 
-## 3. MVP user experience
+1. **Voice foundation and local history:** assistant screen, voice input/output, SQLite, conversation list/reopen, New conversation, and temporary local responder. No Gemini yet.
+2. **Gemini integration:** real AI responses, selected language, recent conversation context, local key setup, and API failure handling. No actions executed yet.
+3. **Voice action:** execute only the allowlisted scan_cow action to open the existing QR scanner.
+4. **Screen awareness:** current-screen context, selected cow, collar/milk/analysis context where available, localized UX, and full regression checks.
 
-1. A voice-assistant button is available on authenticated app screens.
-2. The farmer taps the button and speaks.
-3. Speech recognition uses the currently selected app language.
-4. The assistant sends the recognized text, recent conversation messages, language, and available screen context to the AI service.
-5. The assistant receives a reply and, if appropriate, a structured action.
-6. Flutter validates the action and invokes an existing app capability.
-7. The reply is saved locally and spoken in the selected language.
-8. Conversation history remains available after the app is restarted.
+The complete manual procedures, acceptance gates, and copy-ready Antigravity requests are in [FOUR_PHASE_IMPLEMENTATION.md](./FOUR_PHASE_IMPLEMENTATION.md).
 
-### First end-to-end demonstration
+## Important workflow rule
 
-Farmer: “Scan a cow.”
+The project owner manually tests the app after each phase and explicitly accepts it before requesting the next phase. The coding agent must not implement multiple phases in one go, skip failed criteria, or claim tests passed without running them.
 
-Gau-Prahari opens the existing QR scanner and says a short confirmation/instruction. The assistant must not claim the scanner opened until the Flutter action has actually been invoked.
+## Documentation map
 
-The next useful interaction is a contextual help question such as “What should I do next?” The answer should reflect the current screen and only use state that the app can supply.
+- [Four-phase implementation and manual acceptance](./FOUR_PHASE_IMPLEMENTATION.md)
+- [Architecture](./ARCHITECTURE.md)
+- [Conversation storage](./CONVERSATION_STORAGE.md)
+- [AI integration](./AI_INTEGRATION.md)
+- [Voice and localization](./VOICE_AND_LOCALIZATION.md)
+- [Actions and screen context](./ACTIONS_AND_CONTEXT.md)
+- [Implementation plan](./IMPLEMENTATION_PLAN.md)
+- [Testing and acceptance](./TESTING_AND_ACCEPTANCE.md)
 
-## 4. What is included
+## Existing integration points
 
-- A voice-assistant entry point for authenticated users.
-- Speech-to-text and text-to-speech.
-- Selected-language support for English, Hindi, and Marathi, subject to platform voice availability.
-- A persistent local conversation database.
-- Recent-message context sent with each AI request.
-- Awareness of the current screen and relevant workflow state.
-- A small allowlist of app actions, beginning with opening the existing QR scanner.
-- Helpful loading, permission, network, and unsupported-command states.
-- Unit/widget tests and a manual Android-device acceptance checklist.
+Current source inspected for this specification:
 
-## 5. Out of scope
+- gau_prahari/lib/main.dart registers AuthController and LocaleController through Provider.
+- gau_prahari/lib/core/localization/locale_controller.dart persists the selected locale and supports en, hi, and mr.
+- gau_prahari/lib/features/cow_selection/presentation/screens/cow_selection_screen.dart opens the existing QR scanner.
+- gau_prahari/lib/features/cow_selection/presentation/screens/qr_scanner_screen.dart contains the current scanner workflow.
+- The app uses direct Navigator and MaterialPageRoute calls. Do not introduce a full routing rewrite for this feature.
 
-- A production-grade security redesign.
-- An on-device large language model.
-- Cloud synchronization of conversation history.
-- A new assistant-specific FastAPI service.
-- Replacing the existing mastitis model or inference API.
-- Redesigning the app's navigation or state management wholesale.
-- Executing arbitrary code, routes, URLs, or methods supplied by the model.
-- Persisting raw audio recordings.
+The codebase is the integration reference. Some older project documents describe a previous prototype scope and may not reflect the current implementation.
 
-## 6. Documentation map
+## Definition of done
 
-- [Architecture](./ARCHITECTURE.md) — components and data flow.
-- [Conversation storage](./CONVERSATION_STORAGE.md) — local SQLite schema and history behavior.
-- [AI integration](./AI_INTEGRATION.md) — request/response contract, prompt behavior, and demo API-key setup.
-- [Voice and localization](./VOICE_AND_LOCALIZATION.md) — speech lifecycle and selected-language behavior.
-- [Actions and screen context](./ACTIONS_AND_CONTEXT.md) — action allowlist, context model, and navigation constraints.
-- [Implementation plan](./IMPLEMENTATION_PLAN.md) — ordered milestones and repository integration points.
-- [Testing and acceptance](./TESTING_AND_ACCEPTANCE.md) — definition of done and test scenarios.
-
-## 7. Existing application integration points
-
-Current code inspected for this specification:
-
-- `gau_prahari/lib/main.dart` registers `AuthController` and `LocaleController` through Provider.
-- `gau_prahari/lib/core/localization/locale_controller.dart` persists the selected locale and supports `en`, `hi`, and `mr`.
-- `gau_prahari/lib/features/cow_selection/presentation/screens/cow_selection_screen.dart` opens the current QR scanner.
-- `gau_prahari/lib/features/cow_selection/presentation/screens/qr_scanner_screen.dart` contains the existing scanner flow.
-- The existing project uses direct `Navigator` calls in screens; the assistant should integrate with this setup rather than introduce a routing framework.
-
-The codebase is the current integration reference. Some existing project documents describe an earlier prototype scope and may be stale; inspect the implementation before assuming a feature is absent.
-
-## 8. Done means
-
-The MVP is complete when the farmer can speak in the selected language, receive a spoken AI response, reopen the app and see the persisted conversation, ask a context-aware help question, and say “Scan a cow” to open the existing QR scanner through a validated Flutter action.
+The four phases are complete when the farmer can speak and hear a response in the selected app language where device support exists, browse and persist local conversations, ask context-aware questions grounded in actual app state, and say “Scan a cow” to open the existing QR scanner through an allowlisted action.

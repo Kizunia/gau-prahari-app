@@ -1,120 +1,103 @@
 # Voice Assistant Testing and Acceptance
 
-## 1. Definition of done
+Use this checklist alongside [FOUR_PHASE_IMPLEMENTATION.md](./FOUR_PHASE_IMPLEMENTATION.md). Phase-specific acceptance is mandatory; the final overall definition of done does not replace the gates.
 
-The hackathon MVP is accepted when all P0 scenarios pass on the intended Android device:
+## Phase 1 — Voice foundation and history
 
-- The assistant button is available for an authenticated user and is absent from the login flow.
-- The microphone starts/stops cleanly and the current app language controls recognition.
-- The assistant returns an intelligible spoken response in the selected language when the device supports that voice.
-- User transcripts and assistant replies persist in SQLite across an app restart.
-- Only the most recent 20 messages are sent as conversation history.
-- The assistant can use available current-screen context to answer a basic help question.
-- “Scan a cow” opens the existing QR scanner through a validated allowlisted action.
-- Action outcomes are stored accurately; the assistant does not claim success for a failed or unexecuted action.
-- API/network/permission errors do not crash or block the existing touch-driven app.
-- The tests and analyzer can run without a live AI API key.
+### Manual tests
 
-## 2. Unit tests
+- [ ] Sign in and verify the assistant entry point appears on authenticated workflow screens and is absent from login/register.
+- [ ] Verify the entry point is hidden while the QR scanner is active.
+- [ ] Speak a short English phrase; verify recognized text appears.
+- [ ] Verify the temporary local response appears, is stored, and is spoken.
+- [ ] Reopen the assistant and verify the conversation persists.
+- [ ] Start a new conversation; verify older history remains.
+- [ ] Reopen an older conversation and verify ordering/content.
+- [ ] Restart the app and verify the last-opened conversation restores.
+- [ ] Test Hindi/Marathi where available on device.
+- [ ] Test permission denial, cancellation, no speech, and unavailable voice.
+- [ ] Exercise existing touch workflows.
 
-### Conversation storage
+### Acceptance criteria
 
-- Create a conversation on the first user message.
-- Insert user and assistant messages.
-- Retrieve messages in chronological order.
-- Retrieve only the latest 20 messages for AI context.
-- Reopen the database and verify messages persisted.
-- Update conversation timestamps.
-- Keep conversations separated by local owner identifier where used.
-- Delete one conversation and its child messages if deletion is implemented.
-- Handle an empty database and an initialization/write error.
+- [ ] Voice input and output work for a supported selected locale.
+- [ ] SQLite history and reopen/new-conversation behavior work across restart.
+- [ ] The phase does not require a Gemini API key.
+- [ ] Errors do not crash the app.
+- [ ] Existing touch workflows continue to work.
+- [ ] flutter analyze and flutter test pass or failures are reported with evidence.
 
-### AI response parsing
+## Phase 2 — Gemini integration
 
-- Parse a valid reply with no action.
-- Parse a valid reply with `scan_cow`.
-- Reject an empty reply.
-- Reject malformed JSON.
-- Reject an unknown action name.
-- Reject invalid action arguments.
-- Treat provider errors and timeouts as typed failures.
-- Confirm logs/output do not include the API key.
+### Manual tests
 
-### Controller and voice state
+- [ ] With local config, ask a general question and verify a real Gemini reply appears.
+- [ ] Ask a follow-up question and verify recent history is used.
+- [ ] Restart the app, reopen the conversation, and continue it.
+- [ ] Change selected language and test a new request.
+- [ ] Disable networking and verify a localized error and saved transcript.
+- [ ] Test missing/invalid local configuration.
+- [ ] Verify no action is executed from AI output.
+- [ ] Confirm real config is ignored and not committed.
 
-- A finalized transcript is persisted before the AI request begins.
-- A valid reply is persisted and sent to TTS.
-- The controller does not start overlapping AI requests.
-- Starting a new listening session stops prior TTS output.
-- Language selection is read from the existing locale controller.
-- API failure produces a fallback message and returns to a usable state.
-- The new conversation operation does not delete existing conversations.
+### Acceptance criteria
 
-## 3. Widget tests
+- [ ] Gemini replies replace the temporary responder.
+- [ ] The active conversation's latest 20 messages are ordered correctly and the newest user message appears once.
+- [ ] API errors do not crash the app or lose the transcript.
+- [ ] Automated tests use fake AI responses and do not require a valid key.
+- [ ] No app action executes in Phase 2.
+- [ ] No real key is tracked by Git.
 
-- Microphone control reflects idle/listening/processing/speaking states.
-- Permission or recognition errors show useful feedback.
-- The user can cancel listening.
-- Conversation messages render in their correct order and role.
-- New conversation resets active context without deleting history.
-- The assistant entry point is not shown when the user is unauthenticated.
-- Action failure produces a failure message instead of a false success confirmation.
+## Phase 3 — QR scanner action
 
-Use fake speech and AI services in widget tests. Avoid real microphone, TTS, or network calls in automated tests.
+### Manual tests
 
-## 4. Manual device checklist
+- [ ] Say “Scan a cow” on cow selection and verify the existing QR scanner opens.
+- [ ] Verify the assistant screen does not cover the scanner.
+- [ ] Verify spoken instruction matches the selected language where supported.
+- [ ] Scan the valid demo tag and continue through the existing workflow.
+- [ ] Navigate back and check that the route stack is natural.
+- [ ] Repeat from another authenticated screen with the assistant entry point.
+- [ ] Request an unsupported action and verify no navigation occurs.
+- [ ] Verify action outcome appears in local conversation history.
 
-### Voice and locale
+### Acceptance criteria
 
-- [ ] English: recognize a simple command and hear a spoken reply.
-- [ ] Hindi: recognize a simple command and hear a spoken reply if device support is available.
-- [ ] Marathi: recognize a simple command and hear a spoken reply if device support is available.
-- [ ] Change app language and verify the next interaction uses the new setting.
-- [ ] Test no speech detected and user cancellation.
-- [ ] Test microphone permission denied and permission restored.
+- [ ] scan_cow is the only executable action.
+- [ ] Unknown/malformed actions are rejected.
+- [ ] Success is recorded only after the action handler succeeds.
+- [ ] Scanner and subsequent app workflow remain functional.
+- [ ] Unit tests cover supported, unsupported, and malformed action responses.
 
-### Conversation history
+## Phase 4 — Context awareness and final integration
 
-- [ ] Send a user message and receive a reply.
-- [ ] Close and reopen the app.
-- [ ] Verify that the latest conversation and its messages remain available.
-- [ ] Start a new conversation.
-- [ ] Verify that starting a new conversation leaves the older conversation intact.
-- [ ] Verify the AI request includes no more than the configured recent-message limit.
+### Manual tests
 
-### Actions and context
+- [ ] Ask what can be done on cow selection; verify answer matches actual controls.
+- [ ] Ask which cow is selected during collar import; verify actual ID.
+- [ ] Ask what to do next on milk tester; verify it reflects current workflow.
+- [ ] Ask for an explanation of an actual analysis result; compare it with the displayed result and measurements.
+- [ ] Change cow/screen and ensure prior context is not reused incorrectly.
+- [ ] Test missing context; verify the assistant asks or admits it lacks information.
+- [ ] Change app language during a conversation and verify new replies follow the current setting.
+- [ ] Test rapid repeated inputs, cancellation, permissions, offline/API errors, and restart recovery.
+- [ ] Run formatting, flutter analyze, flutter test, and the end-to-end Android demo.
 
-- [ ] Say “Scan a cow” from the cow-selection screen.
-- [ ] Say “Scan a cow” from another authenticated screen if app-level button coverage is implemented there.
-- [ ] Verify the existing QR scanner opens.
-- [ ] Verify the spoken instruction uses the selected language.
-- [ ] Ask for help on the cow-selection screen and verify the response uses actual screen context.
-- [ ] Test an unknown or unsupported action and verify that no navigation occurs.
-- [ ] If analysis-result explanations are implemented, verify that the answer only repeats fields present in the actual result.
+### Acceptance criteria
 
-### Failure handling
+- [ ] Screen context comes from real app state and is updated/cleared on workflow changes.
+- [ ] Contextual explanations match actual objects and do not invent results.
+- [ ] Missing/stale context is handled without guessing.
+- [ ] Existing touch-based cow, QR, collar, tester, and analysis flows still work.
+- [ ] All automated/manual results and remaining limitations are reported accurately.
 
-- [ ] Disable network and issue an AI request.
-- [ ] Test an invalid/missing local API configuration.
-- [ ] Test a provider error or quota response where practical.
-- [ ] Verify the transcript is retained after an AI failure.
-- [ ] Verify the existing cow-selection and analysis workflows still work via touch controls.
+## Automated test guidance
 
-## 5. Release/demo checklist
+Test SQLite repository operations, ordered history retrieval, latest-20-message selection, AI response parsing, unknown-action rejection, controller state transitions, duplicate request prevention, error handling, and context lifecycle.
 
-- [ ] Run `dart format` on changed Dart files.
-- [ ] Run `flutter analyze`.
-- [ ] Run `flutter test`.
-- [ ] Confirm no working API key is tracked by Git.
-- [ ] Confirm the real config path is ignored and the example file contains placeholders only.
-- [ ] Review the final Git diff for unrelated changes.
-- [ ] Test the built APK on the actual presentation device.
-- [ ] Remove/rotate the demo API key after the hackathon.
+Use fake AI/speech services in automated tests; do not require live microphone access, real TTS, network access, or a real API key to run unit/widget tests.
 
-## 6. Known limits
+## Local configuration reminder
 
-- Recognition and TTS quality depend on platform services and installed language support.
-- Hosted AI responses require network connectivity.
-- A key embedded in the Flutter build may be extracted from the APK; this is accepted only for the controlled hackathon demo.
-- Conversation history is local to the device installation and is not cloud-synchronized.
-- The assistant explains available app output; it does not replace veterinary assessment or the existing prediction pipeline.
+A fresh checkout may need a placeholder ai_config.dart copied from the tracked example so Dart imports resolve. A valid key must not be required for analyzer/tests. The real key must remain untracked and is still extractable from a built APK; this is accepted only for the hackathon demo.
