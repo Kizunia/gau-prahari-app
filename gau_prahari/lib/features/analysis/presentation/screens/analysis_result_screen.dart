@@ -329,7 +329,7 @@ class AnalysisResultScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        factor,
+                        t.translateFactor(factor),
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textPrimary,
@@ -379,7 +379,7 @@ class AnalysisResultScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            result.recommendedAction,
+            t.translateRecommendation(result.recommendedAction, result.riskLevel),
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,

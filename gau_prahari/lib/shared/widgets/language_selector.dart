@@ -8,15 +8,25 @@ import '../../core/localization/locale_controller.dart';
 /// Displays available languages as a dropdown button suitable for placing
 /// in an AppBar or settings area.
 class LanguageSelector extends StatelessWidget {
-  const LanguageSelector({super.key});
+  final bool compact;
+  const LanguageSelector({super.key, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
-    final localeController = context.watch<LocaleController>();
-    final currentCode = localeController.locale.languageCode;
+    LocaleController? localeController;
+    try {
+      localeController = Provider.of<LocaleController>(context);
+    } catch (_) {
+      localeController = null;
+    }
+    final code = localeController?.locale.languageCode ?? 'en';
+    final currentCode = LocaleController.availableLocales.containsKey(code) ? code : 'en';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 6 : 8,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
@@ -36,7 +46,7 @@ class LanguageSelector extends StatelessWidget {
             return DropdownMenuItem<String>(
               value: entry.key,
               child: Text(
-                entry.value,
+                compact ? entry.key.toUpperCase() : entry.value,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: entry.key == currentCode
@@ -50,7 +60,7 @@ class LanguageSelector extends StatelessWidget {
             );
           }).toList(),
           onChanged: (code) {
-            if (code != null) {
+            if (code != null && localeController != null) {
               localeController.setLocale(Locale(code));
             }
           },

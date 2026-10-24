@@ -5,6 +5,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../shared/widgets/language_selector.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -64,6 +65,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Language Selector Bar
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: LanguageSelector(),
+                    ),
+                    const SizedBox(height: 12),
+
                     // Brand Header
                     _buildHeader(),
                     const SizedBox(height: 28),

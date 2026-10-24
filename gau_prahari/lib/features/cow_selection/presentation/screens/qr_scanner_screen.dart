@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../shared/widgets/language_selector.dart';
 import '../../data/repositories/cow_repository_impl.dart';
 import '../../../collar_import/presentation/screens/collar_import_screen.dart';
 
@@ -109,6 +110,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
         actions: [
+          const LanguageSelector(),
           IconButton(
             icon: ValueListenableBuilder<MobileScannerState>(
               valueListenable: _scannerController,
@@ -154,15 +156,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                     children: [
                       const Icon(Icons.videocam_off_rounded, color: Colors.white54, size: 54),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Camera unavailable (Emulator / Permission)',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                      Text(
+                        t.translate('cameraUnavailable'),
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Use the Quick Demo Test buttons below to simulate scanning COW-104.',
+                      Text(
+                        t.translate('cameraUnavailableHint'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                     ],
                   ),
@@ -245,17 +247,17 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
                     runSpacing: 6,
                     children: [
                       _buildSimulateChip(
-                        label: 'COW-104 (Gir Cross)',
+                        label: t.translate('demoChipGir'),
                         cowId: 'COW-104',
                         color: AppColors.primary,
                       ),
                       _buildSimulateChip(
-                        label: 'COW-101 (Buffalo)',
+                        label: t.translate('demoChipMurrah'),
                         cowId: 'COW-101',
                         color: AppColors.secondary,
                       ),
                       _buildSimulateChip(
-                        label: 'COW-102 (Tharparkar)',
+                        label: t.translate('demoChipTharparkar'),
                         cowId: 'COW-102',
                         color: AppColors.warning,
                       ),
@@ -270,15 +272,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
           if (_isProcessing)
             Container(
               color: Colors.black.withValues(alpha: 0.6),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                    SizedBox(height: 16),
+                    const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                    const SizedBox(height: 16),
                     Text(
-                      'Fetching Cattle Telemetry Profile...',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                      t.translate('fetchingCattleProfile'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
                     ),
                   ],
                 ),

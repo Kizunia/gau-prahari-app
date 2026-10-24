@@ -355,50 +355,99 @@ class _CollarImportView extends StatelessWidget {
           ],
 
           // Connect / Disconnect and Simulation triggers
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _openDevicePicker(context, btService),
-                  icon: const Icon(Icons.bluetooth_rounded, size: 16),
-                  label: Text(
-                    isStreaming ? btService.connectedDeviceName ?? 'HC-05' : t.translate('connectBluetoothCollar'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: () {
-                  btService.startDemoSimulation(expectedCowId: cow.id);
-                  // Also auto push initial history into controller
-                  Future.delayed(const Duration(milliseconds: 1300), () {
-                    final hist = btService.toCollarHistory(cowId: cow.id);
-                    controller.setCollarHistory(hist, sourceName: 'Arduino Collar (Live)');
-                  });
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  side: const BorderSide(color: AppColors.secondary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 280;
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.play_circle_outline_rounded, size: 16, color: AppColors.secondary),
-                    SizedBox(width: 4),
-                    Text('Demo Stream', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+                    OutlinedButton.icon(
+                      onPressed: () => _openDevicePicker(context, btService),
+                      icon: const Icon(Icons.bluetooth_rounded, size: 16),
+                      label: Text(
+                        isStreaming ? btService.connectedDeviceName ?? 'HC-05' : t.translate('connectBluetoothCollar'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () {
+                        btService.startDemoSimulation(expectedCowId: cow.id);
+                        Future.delayed(const Duration(milliseconds: 1300), () {
+                          final hist = btService.toCollarHistory(cowId: cow.id);
+                          controller.setCollarHistory(hist, sourceName: 'Arduino Collar (Live)');
+                        });
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        side: const BorderSide(color: AppColors.secondary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.play_circle_outline_rounded, size: 16, color: AppColors.secondary),
+                          const SizedBox(width: 4),
+                          Text(t.translate('demoStream'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+                        ],
+                      ),
+                    ),
                   ],
-                ),
-              ),
-            ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openDevicePicker(context, btService),
+                      icon: const Icon(Icons.bluetooth_rounded, size: 16),
+                      label: Text(
+                        isStreaming ? btService.connectedDeviceName ?? 'HC-05' : t.translate('connectBluetoothCollar'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      btService.startDemoSimulation(expectedCowId: cow.id);
+                      Future.delayed(const Duration(milliseconds: 1300), () {
+                        final hist = btService.toCollarHistory(cowId: cow.id);
+                        controller.setCollarHistory(hist, sourceName: 'Arduino Collar (Live)');
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                      side: const BorderSide(color: AppColors.secondary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.play_circle_outline_rounded, size: 16, color: AppColors.secondary),
+                        const SizedBox(width: 4),
+                        Text(t.translate('demoStream'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

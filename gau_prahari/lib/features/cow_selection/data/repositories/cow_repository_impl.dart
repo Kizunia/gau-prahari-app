@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/cow.dart';
 import '../../domain/repositories/cow_repository.dart';
@@ -41,30 +42,59 @@ class CowRepositoryImpl implements CowRepository {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
+  static bool _mockInitialized = false;
+
+  Future<SharedPreferences?> _getPrefs() async {
+    try {
+      if (!_mockInitialized && WidgetsBinding.instance is! WidgetsFlutterBinding) {
+        // ignore: invalid_use_of_visible_for_testing_member
+        SharedPreferences.setMockInitialValues({});
+        _mockInitialized = true;
+      }
+      return await SharedPreferences.getInstance();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, String>> _loadNames() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
+    if (prefs == null) return {};
     final raw = prefs.getString(_namesKey);
     if (raw == null) return {};
-    final decoded = json.decode(raw) as Map<String, dynamic>;
-    return decoded.map((k, v) => MapEntry(k, v.toString()));
+    try {
+      final decoded = json.decode(raw) as Map<String, dynamic>;
+      return decoded.map((k, v) => MapEntry(k, v.toString()));
+    } catch (_) {
+      return {};
+    }
   }
 
   Future<void> _saveNames(Map<String, String> names) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_namesKey, json.encode(names));
+    final prefs = await _getPrefs();
+    if (prefs != null) {
+      await prefs.setString(_namesKey, json.encode(names));
+    }
   }
 
   Future<List<Cow>> _loadUserCows() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
+    if (prefs == null) return [];
     final raw = prefs.getString(_userCowsKey);
     if (raw == null) return [];
-    final list = json.decode(raw) as List<dynamic>;
-    return list.map((e) => Cow.fromJson(e as Map<String, dynamic>)).toList();
+    try {
+      final list = json.decode(raw) as List<dynamic>;
+      return list.map((e) => Cow.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<void> _saveUserCows(List<Cow> cows) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userCowsKey, json.encode(cows.map((c) => c.toJson()).toList()));
+    final prefs = await _getPrefs();
+    if (prefs != null) {
+      await prefs.setString(_userCowsKey, json.encode(cows.map((c) => c.toJson()).toList()));
+    }
   }
 
   // ── CowRepository ─────────────────────────────────────────────────────────

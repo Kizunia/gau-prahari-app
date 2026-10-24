@@ -90,7 +90,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   // User status card
-                  if (user != null) _buildUserCard(user),
+                  if (user != null) _buildUserCard(context, user),
                   const SizedBox(height: 16),
 
                   // Scan QR Ear Tag Action Card
@@ -286,7 +286,8 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
     );
   }
 
-  Widget _buildUserCard(dynamic user) {
+  Widget _buildUserCard(BuildContext context, dynamic user) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -323,7 +324,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${user.role} • ${user.identifier}',
+                  '${t.translateRole(user.role)} • ${user.identifier}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.primaryAccent,
@@ -395,7 +396,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                             ),
                           ),
                           Text(
-                            '${cow.id} • ${cow.breed}',
+                            '${cow.id} • ${t.translateBreed(cow.breed)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -413,7 +414,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                             ),
                           ),
                           Text(
-                            '${cow.breed} • Tag: ${cow.tagNumber}',
+                            '${t.translateBreed(cow.breed)} • ${t.translate("tagPrefix")} ${cow.tagNumber}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -464,7 +465,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                 runSpacing: 6,
                 children: [
                   Text(
-                    cow.lactationStage,
+                    t.translateLactation(cow.lactationStage),
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -477,7 +478,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      cow.status,
+                      t.translateStatus(cow.status),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

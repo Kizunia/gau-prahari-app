@@ -523,7 +523,7 @@ class _MilkTesterView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${t.translate("animalPrefix")} ${cow.id} (${cow.breed})',
+                  '${t.translate("animalPrefix")} ${cow.displayName} (${t.translateBreed(cow.breed)})',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -536,7 +536,7 @@ class _MilkTesterView extends StatelessWidget {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  cow.lactationStage,
+                  t.translateLactation(cow.lactationStage),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

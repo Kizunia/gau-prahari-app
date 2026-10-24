@@ -133,6 +133,7 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                   result: widget.result,
                   collarHistory: widget.collarHistory,
                   phoneNumber: phone.isNotEmpty ? phone : null,
+                  localizations: t,
                 );
 
                 // Copy report to clipboard as immediate guarantee
@@ -141,6 +142,7 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                   milkMeasurement: widget.milkMeasurement,
                   result: widget.result,
                   collarHistory: widget.collarHistory,
+                  localizations: t,
                 );
 
                 if (context.mounted) {
@@ -169,6 +171,7 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                   milkMeasurement: widget.milkMeasurement,
                   result: widget.result,
                   collarHistory: widget.collarHistory,
+                  localizations: t,
                 );
                 setState(() => _copied = true);
                 if (context.mounted) {

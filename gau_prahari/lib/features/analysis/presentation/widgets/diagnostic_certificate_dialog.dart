@@ -121,7 +121,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            '${t.translate("breedPrefix")} ${cow.breed}',
+                            '${t.translate("breedPrefix")} ${t.translateBreed(cow.breed)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -137,7 +137,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '${t.translate("lactationPrefix")} ${cow.lactationStage}',
+                            '${t.translate("lactationPrefix")} ${t.translateLactation(cow.lactationStage)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
@@ -245,7 +245,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                       const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
                       Expanded(
                         child: Text(
-                          f,
+                          t.translateFactor(f),
                           style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                         ),
                       ),
@@ -269,7 +269,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                   border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                 ),
                 child: Text(
-                  result.recommendedAction,
+                  t.translateRecommendation(result.recommendedAction, result.riskLevel),
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.primaryDark,
@@ -298,6 +298,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                           milkMeasurement: milkMeasurement,
                           result: result,
                           collarHistory: collarHistory,
+                          localizations: t,
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

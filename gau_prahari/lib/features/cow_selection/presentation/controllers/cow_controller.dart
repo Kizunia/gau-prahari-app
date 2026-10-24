@@ -8,7 +8,48 @@ class CowController extends ChangeNotifier {
 
   CowController({required CowRepository repository}) : _repository = repository;
 
-  List<Cow> _cows = [];
+  List<Cow> _cows = const [
+    Cow(
+      id: 'COW-104',
+      tagNumber: 'RFID-9821',
+      breed: 'Gir / Sahiwal Cross',
+      ageYears: 4,
+      lactationStage: 'Early Lactation (Day 42)',
+      status: 'Ready for Test',
+    ),
+    Cow(
+      id: 'COW-101',
+      tagNumber: 'RFID-3312',
+      breed: 'Murrah Buffalo',
+      ageYears: 5,
+      lactationStage: 'Mid Lactation (Day 110)',
+      status: 'Collar History Available',
+    ),
+    Cow(
+      id: 'COW-102',
+      tagNumber: 'RFID-4450',
+      breed: 'Sahiwal',
+      ageYears: 3,
+      lactationStage: 'Early Lactation (Day 28)',
+      status: 'At Risk (Subclinical)',
+    ),
+    Cow(
+      id: 'COW-103',
+      tagNumber: 'RFID-7719',
+      breed: 'Red Sindhi',
+      ageYears: 6,
+      lactationStage: 'Late Lactation (Day 220)',
+      status: 'Collar History Available',
+    ),
+    Cow(
+      id: 'COW-105',
+      tagNumber: 'RFID-1102',
+      breed: 'Tharparkar',
+      ageYears: 3,
+      lactationStage: 'Fresh (Day 14)',
+      status: 'Needs Milk Test',
+    ),
+  ];
   bool _isLoading = false;
   String? _error;
 
@@ -18,16 +59,20 @@ class CowController extends ChangeNotifier {
 
   // ── Load ─────────────────────────────────────────────────────────────────
 
-  Future<void> loadCows() async {
-    _isLoading = true;
+  Future<void> loadCows({bool showLoading = false}) async {
+    if (showLoading) {
+      _isLoading = true;
+      notifyListeners();
+    }
     _error = null;
-    notifyListeners();
     try {
       _cows = await _repository.getAllCows();
     } catch (e) {
       _error = e.toString();
     } finally {
-      _isLoading = false;
+      if (showLoading) {
+        _isLoading = false;
+      }
       notifyListeners();
     }
   }
