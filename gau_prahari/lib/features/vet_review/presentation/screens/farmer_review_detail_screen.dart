@@ -132,41 +132,72 @@ class _FarmerReviewDetailScreenState extends State<FarmerReviewDetailScreen> {
               children: [
                 // Collapsible Snapshot Banner
                 Container(
-                  color: AppColors.surface,
+                  color: _showSnapshot
+                      ? AppColors.primaryLight.withValues(alpha: 0.35)
+                      : AppColors.surface,
                   child: InkWell(
                     onTap: () => setState(() => _showSnapshot = !_showSnapshot),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
-                          Icon(
-                            _showSnapshot
-                                ? Icons.keyboard_arrow_up_rounded
-                                : Icons.keyboard_arrow_down_rounded,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _showSnapshot
-                                  ? 'Hide Clinical Snapshot'
-                                  : 'View Clinical Snapshot (Cow, Milk & Collar Data)',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               color: AppColors.primaryLight,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'SNAPSHOT',
-                              style: TextStyle(
+                            child: Icon(
+                              _showSnapshot
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _showSnapshot
+                                      ? 'Hide Clinical Snapshot'
+                                      : 'View Clinical Snapshot',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Cow profile, milk diagnostics & collar telemetry',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.9),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Text(
+                              request.riskLevel.isNotEmpty
+                                  ? '${request.riskLevel} RISK'
+                                  : 'SNAPSHOT',
+                              style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primary,
