@@ -115,12 +115,6 @@ void main() {
         veterinarianNameSnapshot: 'Dr. Sharma, DVM',
       );
 
-      final oldOnError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        debugPrint(details.toString());
-      };
-      addTearDown(() => FlutterError.onError = oldOnError);
-
       await tester.pumpWidget(
         buildResponsiveTestApp(
           child: Scaffold(
@@ -162,12 +156,6 @@ void main() {
         veterinarianNameSnapshot: 'Dr. Rameshwar Chandrashekhar Patel, Senior Specialist',
         snapshot: const {},
       );
-
-      final oldOnError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        debugPrint(details.toString());
-      };
-      addTearDown(() => FlutterError.onError = oldOnError);
 
       await tester.pumpWidget(
         buildResponsiveTestApp(

@@ -261,12 +261,14 @@ class SnapshotView extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  'Key Contributing Factors (${factors.length}):',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    'Key Contributing Factors (${factors.length}):',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -558,33 +560,27 @@ class SnapshotView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
               children: [
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isAlert ? AppColors.error : AppColors.textPrimary,
                   ),
                 ),
-                if (unit.isNotEmpty) ...[
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      unit,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                if (unit.isNotEmpty)
+                  Text(
+                    unit,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
               ],
             ),
           ],
