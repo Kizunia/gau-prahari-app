@@ -26,6 +26,36 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<User> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    _user = User(
+      id: 'USR-REG-001',
+      name: name,
+      identifier: email,
+      role: role,
+    );
+    _loggedIn = true;
+    return _user!;
+  }
+
+  @override
+  Future<User> loginDemo({required String role}) async {
+    _user = User(
+      id: 'USR-DEMO-001',
+      name: 'Demo User',
+      identifier: 'demo@gauprahari.org',
+      role: role,
+      isDemo: true,
+    );
+    _loggedIn = true;
+    return _user!;
+  }
+
+  @override
   Future<void> logout() async {
     _user = null;
     _loggedIn = false;

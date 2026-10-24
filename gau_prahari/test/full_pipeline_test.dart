@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gau_prahari/core/localization/locale_controller.dart';
@@ -17,6 +18,37 @@ class MockPipelineAuthRepository implements AuthRepository {
       name: 'Dr. Rajesh Sharma',
       identifier: identifier,
       role: 'Field Veterinarian',
+      isDemo: true,
+    );
+    _loggedIn = true;
+    return _user!;
+  }
+
+  @override
+  Future<User> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    _user = User(
+      id: 'USR-101',
+      name: name,
+      identifier: email,
+      role: role,
+    );
+    _loggedIn = true;
+    return _user!;
+  }
+
+  @override
+  Future<User> loginDemo({required String role}) async {
+    _user = User(
+      id: 'USR-101',
+      name: 'Dr. Rajesh Sharma',
+      identifier: 'vet@gauprahari.org',
+      role: role,
+      isDemo: true,
     );
     _loggedIn = true;
     return _user!;
@@ -36,6 +68,10 @@ class MockPipelineAuthRepository implements AuthRepository {
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'gau_prahari_locale': 'en'});
+  });
+
   void setPhoneSize(WidgetTester tester) {
     tester.view.physicalSize = const Size(1080, 1920);
     tester.view.devicePixelRatio = 1.0;
@@ -50,6 +86,7 @@ void main() {
     final authController = AuthController(authRepository: authRepo);
     await authController.checkAuthStatus();
     final localeController = LocaleController();
+    await localeController.loadSavedLocale();
 
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'default_english.dart';
@@ -31,14 +32,20 @@ class AppLocalizations {
 
   /// Load the JSON translation file for the current locale.
   Future<bool> load() async {
-    final jsonString = await rootBundle.loadString(
-      'assets/lang/app_${locale.languageCode}.json',
-    );
-    final Map<String, dynamic> jsonMap = json.decode(jsonString);
-    _localizedStrings = jsonMap.map(
-      (key, value) => MapEntry(key, value.toString()),
-    );
-    return true;
+    try {
+      final jsonString = await rootBundle.loadString(
+        'assets/lang/app_${locale.languageCode}.json',
+      );
+      final Map<String, dynamic> jsonMap = json.decode(jsonString);
+      _localizedStrings = jsonMap.map(
+        (key, value) => MapEntry(key, value.toString()),
+      );
+      return true;
+    } catch (_) {
+      // In case assets cannot be read, fall back to default English
+      _localizedStrings = defaultEnglish;
+      return false;
+    }
   }
 
   /// Translate a key to the current locale's string.
@@ -90,10 +97,16 @@ class _AppLocalizationsDelegate
   bool isSupported(Locale locale) => AppLocalizations.isSupported(locale);
 
   @override
-  Future<AppLocalizations> load(Locale locale) async {
+  Future<AppLocalizations> load(Locale locale) {
     final localizations = AppLocalizations(locale);
-    await localizations.load();
-    return localizations;
+    if (locale.languageCode == 'en') {
+      localizations.load().catchError((_) => false);
+      return SynchronousFuture<AppLocalizations>(localizations);
+    }
+    return localizations
+        .load()
+        .then((_) => localizations)
+        .catchError((_) => localizations);
   }
 
   @override

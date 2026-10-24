@@ -221,5 +221,10 @@
   "keyCleared": "API Key cleared",
   "scanCowAction": "Open QR Scanner",
   "missingApiKeyError": "Gemini API key is required. Tap the key icon in the top bar to set it.",
-  "processingError": "Unable to process your request. Please check your internet connection or Gemini API key."
+  "processingError": "Unable to process your request. Please check your internet connection or Gemini API key.",
+  "requestVetReview": "Request Veterinarian Review",
+  "myReviewRequests": "My Review Requests",
+  "vetPortal": "Veterinarian Portal",
+  "createAccount": "Create Account",
+  "tryDemo": "Try Demo Mode"
 }

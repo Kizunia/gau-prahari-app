@@ -74,6 +74,56 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Register a new account with email/password and role
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final user = await _authRepository.register(
+        name: name,
+        email: email,
+        password: password,
+        role: role,
+      );
+      _currentUser = user;
+      _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _status = AuthStatus.error;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Start an isolated demo session
+  Future<bool> loginDemo({required String role}) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final user = await _authRepository.loginDemo(role: role);
+      _currentUser = user;
+      _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _status = AuthStatus.error;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Perform user logout
   Future<void> logout() async {
     _status = AuthStatus.loading;

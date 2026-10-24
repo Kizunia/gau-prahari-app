@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:gau_prahari/core/constants/app_colors.dart';
 import 'package:gau_prahari/shared/widgets/custom_button.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../collar_import/domain/entities/collar_telemetry.dart';
 import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../cow_selection/presentation/screens/cow_selection_screen.dart';
 import '../../../milk_tester/domain/entities/milk_measurement.dart';
-import '../../domain/entities/analysis_result.dart';
+import '../../../vet_review/presentation/screens/create_review_request_screen.dart';
 import '../../../voice_assistant/presentation/widgets/voice_assistant_button.dart';
+import '../../domain/entities/analysis_result.dart';
 import '../widgets/share_report_bottom_sheet.dart';
 
 class AnalysisResultScreen extends StatelessWidget {
@@ -23,6 +27,50 @@ class AnalysisResultScreen extends StatelessWidget {
     this.collarHistory,
     required this.result,
   });
+
+  void _handleVetReview(BuildContext context) {
+    final authCtrl = context.read<AuthController>();
+    final user = authCtrl.currentUser;
+
+    if (user == null || user.isDemo) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Farmer Account Required'),
+          content: const Text(
+            'Requesting a clinical veterinarian review requires a registered farmer account. Demo sessions use isolated local sample data.\n\nPlease sign in or create a free farmer account to connect with registered veterinarians.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+              child: const Text('Sign In / Register'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CreateReviewRequestScreen(
+          cow: cow,
+          result: result,
+          milkMeasurement: milkMeasurement,
+          collarHistory: collarHistory,
+        ),
+      ),
+    );
+  }
 
   void _openShareOptions(BuildContext context) {
     showModalBottomSheet(
@@ -50,7 +98,17 @@ class AnalysisResultScreen extends StatelessWidget {
           child: Text(t.translate('mastitisRiskAssessment')),
         ),
         actions: [
-          VoiceAssistantButton(screenName: 'analysis_result', contextData: {'cowId': cow.id, 'cowName': cow.displayName, 'riskLevel': result.riskLevel, 'probability': result.probability, 'factors': result.factors, 'recommendedAction': result.recommendedAction}),
+          VoiceAssistantButton(
+            screenName: 'analysis_result',
+            contextData: {
+              'cowId': cow.id,
+              'cowName': cow.displayName,
+              'riskLevel': result.riskLevel,
+              'probability': result.probability,
+              'factors': result.factors,
+              'recommendedAction': result.recommendedAction,
+            },
+          ),
           IconButton(
             tooltip: t.translate('shareReport'),
             icon: const Icon(Icons.share_rounded, color: AppColors.primary),
@@ -114,7 +172,16 @@ class AnalysisResultScreen extends StatelessWidget {
             _buildParameterBreakdown(context),
             const SizedBox(height: 24),
 
-            // 6. Action: Share / Export Clinical Report
+            // 6. Action: Request Veterinarian Review
+            CustomButton(
+              text: t.translate('requestVetReview'),
+              icon: Icons.medical_services_rounded,
+              backgroundColor: const Color(0xFF1565C0),
+              onPressed: () => _handleVetReview(context),
+            ),
+            const SizedBox(height: 12),
+
+            // 7. Action: Share / Export Clinical Report
             CustomButton(
               text: t.translate('shareClinicReport'),
               icon: Icons.share_rounded,
@@ -123,7 +190,7 @@ class AnalysisResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // 7. Action: Done & Select Next Animal
+            // 8. Action: Done & Select Next Animal
             CustomButton(
               text: t.translate('doneSelectNext'),
               icon: Icons.check_circle_outline_rounded,

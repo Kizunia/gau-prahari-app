@@ -6,6 +6,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../controllers/auth_controller.dart';
+import 'register_screen.dart';
+import 'veterinarian_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _roleError;
 
   @override
   void dispose() {
@@ -31,18 +34,40 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _identifierController.text = identifier;
       _passwordController.text = password;
+      _roleError = null;
     });
   }
 
   Future<void> _handleLogin() async {
     FocusScope.of(context).unfocus();
+    setState(() => _roleError = null);
+
     if (!_formKey.currentState!.validate()) return;
 
     final authController = context.read<AuthController>();
-    await authController.login(
+    final success = await authController.login(
       identifier: _identifierController.text,
       password: _passwordController.text,
     );
+
+    if (success && mounted) {
+      final user = authController.currentUser;
+      // AUTH-08: Check role for real accounts. Veterinarians should use the Veterinarian portal.
+      if (user != null && !user.isDemo && user.isVeterinarian) {
+        await authController.logout();
+        if (mounted) {
+          setState(() {
+            _roleError =
+                'Veterinarian account detected. Please use the Veterinarian Portal to sign in.';
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _handleTryDemo() async {
+    final authController = context.read<AuthController>();
+    await authController.loginDemo(role: 'farmer');
   }
 
   @override
@@ -68,8 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     _buildHeader(),
                     const SizedBox(height: 28),
 
+                    // Role Restriction Error
+                    if (_roleError != null) ...[
+                      _buildErrorBanner(_roleError!),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Error Alert Banner
-                    if (authController.errorMessage != null) ...[
+                    if (authController.errorMessage != null && _roleError == null) ...[
                       _buildErrorBanner(authController.errorMessage!),
                       const SizedBox(height: 16),
                     ],
@@ -158,10 +189,102 @@ class _LoginScreenState extends State<LoginScreen> {
                             isLoading: authController.isLoading,
                             onPressed: _handleLogin,
                           ),
+                          const SizedBox(height: 16),
+
+                          // Create Account Link (AUTH-02)
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text(
+                                "Don't have an account? ",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const RegisterScreen(
+                                        initialRole: 'farmer',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  t.translate('createAccount'),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          const Divider(height: 1, color: AppColors.border),
+                          const SizedBox(height: 14),
+
+                          // Separate Veterinarian Portal Link (AUTH-06)
+                          OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.medical_services_rounded,
+                              size: 18,
+                              color: Color(0xFF1565C0),
+                            ),
+                            label: Text(
+                              t.translate('vetPortal'),
+                              style: const TextStyle(
+                                color: Color(0xFF1565C0),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF1565C0)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const VeterinarianLoginScreen(),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+
+                    // Direct Try Demo Entry Point (AUTH-09)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.play_circle_outline_rounded,
+                          color: AppColors.secondary),
+                      label: Text(
+                        t.translate('tryDemo'),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: AppColors.surface,
+                        side: const BorderSide(color: AppColors.secondary),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: _handleTryDemo,
+                    ),
+                    const SizedBox(height: 16),
 
                     // Quick Demo Credentials Selector
                     _buildDemoChips(),

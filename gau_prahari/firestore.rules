@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isVeterinarian() {
+      return isAuthenticated() && getUserData().role == 'veterinarian';
+    }
+
+    function isFarmer() {
+      return isAuthenticated() && getUserData().role == 'farmer';
+    }
+
+    // 1. Users collection: profiles and veterinarian directory
+    match /users/{uid} {
+      // Any authenticated user can read profiles (directory query role == 'veterinarian')
+      allow read: if isAuthenticated();
+
+      // Only the user themselves can create their profile on registration
+      allow create: if isOwner(uid)
+                    && request.resource.data.uid == uid
+                    && (request.resource.data.role == 'farmer' || request.resource.data.role == 'veterinarian');
+
+      // Users may update their name/display info, but CANNOT change their role or UID
+      allow update: if isOwner(uid)
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.role == resource.data.role;
+
+      // No client profile deletion
+      allow delete: if false;
+    }
+
+    // 2. Review Requests collection
+    match /reviewRequests/{requestId} {
+      // A farmer can read only their own requests; a vet can read only requests assigned to them
+      allow read: if isAuthenticated() && (
+        resource.data.farmerUid == request.auth.uid ||
+        resource.data.veterinarianUid == request.auth.uid
+      );
+
+      // A farmer can create a new review request
+      allow create: if isAuthenticated()
+                    && request.resource.data.farmerUid == request.auth.uid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.snapshot != null;
+
+      // Updates to review requests:
+      // - Immutable fields: farmerUid, veterinarianUid, snapshot, cowId, createdAt MUST NOT CHANGE
+      // - Permitted updates:
+      //   a) Assigned veterinarian closing the request: status becomes 'closed'
+      //   b) Participant appending a message (status transition or timestamp update while open)
+      allow update: if isAuthenticated()
+                    // Participant check
+                    && (resource.data.farmerUid == request.auth.uid || resource.data.veterinarianUid == request.auth.uid)
+                    // Immutability checks
+                    && request.resource.data.farmerUid == resource.data.farmerUid
+                    && request.resource.data.veterinarianUid == resource.data.veterinarianUid
+                    && request.resource.data.snapshot == resource.data.snapshot
+                    && request.resource.data.cowId == resource.data.cowId
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    // Closed request is terminal
+                    && (resource.data.status != 'closed' || request.resource.data.status == 'closed')
+                    // Only assigned vet can close
+                    && (request.resource.data.status != 'closed' || resource.data.veterinarianUid == request.auth.uid);
+
+      // Deletions are forbidden to preserve medical audit trail
+      allow delete: if false;
+
+      // 3. Messages subcollection
+      match /messages/{messageId} {
+        // Read: only participants of parent request can read
+        allow read: if isAuthenticated() && (
+          get(/databases/$(database)/documents/reviewRequests/$(requestId)).data.farmerUid == request.auth.uid ||
+          get(/databases/$(database)/documents/reviewRequests/$(requestId)).data.veterinarianUid == request.auth.uid
+        );
+
+        // Create: append-only, sender must match auth, request must NOT be closed
+        allow create: if isAuthenticated()
+                      && request.resource.data.senderUid == request.auth.uid
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 2000
+                      && get(/databases/$(database)/documents/reviewRequests/$(requestId)).data.status != 'closed'
+                      && (
+                        get(/databases/$(database)/documents/reviewRequests/$(requestId)).data.farmerUid == request.auth.uid ||
+                        get(/databases/$(database)/documents/reviewRequests/$(requestId)).data.veterinarianUid == request.auth.uid
+                      );
+
+        // Edit and delete are strictly forbidden (append-only)
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

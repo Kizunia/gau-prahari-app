@@ -1,3 +1,4 @@
+import 'package:gau_prahari/core/localization/locale_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,8 @@ import 'package:gau_prahari/features/milk_tester/presentation/screens/milk_teste
 import 'package:gau_prahari/features/analysis/domain/entities/analysis_result.dart';
 import 'package:gau_prahari/features/analysis/presentation/screens/analysis_result_screen.dart';
 import 'package:gau_prahari/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:gau_prahari/features/cow_selection/presentation/controllers/cow_controller.dart';
+import 'package:gau_prahari/features/cow_selection/data/repositories/cow_repository_impl.dart';
 
 Widget buildResponsiveTestApp({
   required Widget child,
@@ -104,10 +107,16 @@ void main() {
 
       final authRepo = AuthRepositoryImpl();
       final authCtrl = AuthController(authRepository: authRepo);
+      final cowCtrl = CowController(repository: CowRepositoryImpl());
+      final localeCtrl = LocaleController();
 
       await tester.pumpWidget(
-        ChangeNotifierProvider.value(
-          value: authCtrl,
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: authCtrl),
+            ChangeNotifierProvider.value(value: cowCtrl),
+            ChangeNotifierProvider.value(value: localeCtrl),
+          ],
           child: buildResponsiveTestApp(child: const CowSelectionScreen()),
         ),
       );

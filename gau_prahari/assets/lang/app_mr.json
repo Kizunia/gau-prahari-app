@@ -221,5 +221,10 @@
   "keyCleared": "API की हटवली",
   "scanCowAction": "क्युआर स्कॅनर उघडा",
   "missingApiKeyError": "Gemini API की आवश्यक आहे. ती सेट करण्यासाठी वरील की आयकॉनवर टॅप करा.",
-  "processingError": "विनंती प्रक्रिया करण्यात अक्षम. कृपया इंटरनेट कनेक्शन किंवा Gemini API की तपासा."
+  "processingError": "विनंती प्रक्रिया करण्यात अक्षम. कृपया इंटरनेट कनेक्शन किंवा Gemini API की तपासा.",
+  "requestVetReview": "पशुवैद्यकीय पुनरावलोकन विनंती",
+  "myReviewRequests": "माझ्या पुनरावलोकन विनंत्या",
+  "vetPortal": "पशुवैद्यकीय पोर्टल",
+  "createAccount": "खाते तयार करा",
+  "tryDemo": "डेमो मोड वापरून पहा"
 }

@@ -6,13 +6,17 @@ import 'core/firebase/firebase_initializer.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/data/repositories/firebase_auth_repository.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/cow_selection/data/repositories/cow_repository_impl.dart';
 import 'features/cow_selection/presentation/controllers/cow_controller.dart';
 import 'features/cow_selection/presentation/screens/cow_selection_screen.dart';
+import 'features/vet_review/data/repositories/firestore_vet_review_repository.dart';
+import 'features/vet_review/data/repositories/local_draft_repository.dart';
+import 'features/vet_review/domain/repositories/vet_review_repository.dart';
+import 'features/vet_review/presentation/screens/veterinarian_dashboard_screen.dart';
 import 'features/voice_assistant/data/repositories/conversation_repository_impl.dart';
 import 'features/voice_assistant/data/services/speech_output_service_impl.dart';
 import 'features/voice_assistant/data/services/speech_recognition_service_impl.dart';
@@ -26,7 +30,7 @@ void main() async {
   // Initialize Firebase (real cloud backend)
   await FirebaseInitializer.initialize();
 
-  final AuthRepository authRepository = AuthRepositoryImpl();
+  final AuthRepository authRepository = FirebaseAuthRepository();
   final authController = AuthController(authRepository: authRepository);
   final cowController = CowController(repository: CowRepositoryImpl());
 
@@ -51,6 +55,8 @@ class GauPrahariApp extends StatelessWidget {
   final LocaleController localeController;
   final CowController? cowController;
   final VoiceAssistantController? voiceAssistantController;
+  final VetReviewRepository? vetReviewRepository;
+  final LocalDraftRepository? localDraftRepository;
 
   const GauPrahariApp({
     super.key,
@@ -58,6 +64,8 @@ class GauPrahariApp extends StatelessWidget {
     required this.localeController,
     this.cowController,
     this.voiceAssistantController,
+    this.vetReviewRepository,
+    this.localDraftRepository,
   });
 
   @override
@@ -83,6 +91,14 @@ class GauPrahariApp extends StatelessWidget {
                 responder: AiAssistantService(cowRepository: CowRepositoryImpl()),
               ),
         ),
+        Provider<VetReviewRepository>(
+          create: (_) =>
+              vetReviewRepository ?? FirestoreVetReviewRepository(),
+        ),
+        Provider<LocalDraftRepository>(
+          create: (_) =>
+              localDraftRepository ?? LocalDraftRepository(),
+        ),
       ],
       child: Consumer<LocaleController>(
         builder: (context, localeCtrl, _) {
@@ -106,7 +122,7 @@ class GauPrahariApp extends StatelessWidget {
   }
 }
 
-/// Dynamic gate directing the user to Login or Home based on auth state.
+/// Dynamic gate directing the user to Login or Home based on auth state and role.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -142,6 +158,10 @@ class AuthGate extends StatelessWidget {
     }
 
     if (authController.isAuthenticated) {
+      if (authController.currentUser?.isVeterinarian == true &&
+          authController.currentUser?.isDemo != true) {
+        return const VeterinarianDashboardScreen();
+      }
       return const CowSelectionScreen();
     }
 

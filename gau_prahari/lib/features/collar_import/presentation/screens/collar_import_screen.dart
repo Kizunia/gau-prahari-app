@@ -75,12 +75,17 @@ class _CollarImportScreenState extends State<CollarImportScreen> {
                     color: AppColors.primary,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    widget.cow.displayName,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 75),
+                    child: Text(
+                      widget.cow.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -235,24 +240,28 @@ class _CollarImportView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  statusText,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                  ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                statusText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: statusColor,
                 ),
               ),
-            ],
+            ),
           ),
           if (btService.state == CollarConnectionState.error &&
               btService.errorMessage != null) ...[
@@ -374,10 +383,11 @@ class _CollarImportView extends StatelessWidget {
           ],
 
           // Connect / Disconnect and Simulation triggers
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
+              OutlinedButton.icon(
                   onPressed: () => _openDevicePicker(context, btService),
                   icon: const Icon(Icons.bluetooth_rounded, size: 16),
                   label: Text(
@@ -402,8 +412,6 @@ class _CollarImportView extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
               OutlinedButton(
                 onPressed: () {
                   btService.startDemoSimulation(expectedCowId: cow.id);

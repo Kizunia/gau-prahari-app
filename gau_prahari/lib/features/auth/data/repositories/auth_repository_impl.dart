@@ -4,7 +4,7 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../models/user_model.dart';
 
-/// Concrete implementation of [AuthRepository] using local session persistence.
+/// Demo and fallback implementation of [AuthRepository] using local session persistence.
 class AuthRepositoryImpl implements AuthRepository {
   final SharedPreferences? _prefs;
 
@@ -20,19 +20,22 @@ class AuthRepositoryImpl implements AuthRepository {
       id: 'USR-101',
       name: 'Dr. Rajesh Sharma',
       identifier: 'vet@gauprahari.org',
-      role: 'Field Veterinarian',
+      role: 'veterinarian',
+      isDemo: true,
     ),
     const UserModel(
       id: 'USR-102',
       name: 'Ramesh Patel',
       identifier: 'farmer@gauprahari.org',
-      role: 'Dairy Farm Supervisor',
+      role: 'farmer',
+      isDemo: true,
     ),
     const UserModel(
       id: 'USR-103',
       name: 'SIH Evaluator',
       identifier: 'admin@gauprahari.org',
-      role: 'System Administrator',
+      role: 'farmer',
+      isDemo: true,
     ),
   ];
 
@@ -41,12 +44,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required String identifier,
     required String password,
   }) async {
-    // Simulate slight network latency for realistic UX
-    await Future.delayed(const Duration(milliseconds: 600));
-
+    await Future.delayed(const Duration(milliseconds: 400));
     final trimmedId = identifier.trim().toLowerCase();
 
-    // Check against demo accounts or accept standard demo format
     UserModel? matchedUser;
     try {
       matchedUser = _demoUsers.firstWhere(
@@ -56,27 +56,53 @@ class AuthRepositoryImpl implements AuthRepository {
       matchedUser = null;
     }
 
-    // Default fallback: allow any valid identifier with password length >= 4
     if (matchedUser == null) {
       if (password.trim().length < 4) {
-        throw Exception(
-          'Invalid password. Password must be at least 4 characters.',
-        );
+        throw Exception('Invalid password. Password must be at least 4 characters.');
       }
       matchedUser = UserModel(
         id: 'USR-${DateTime.now().millisecondsSinceEpoch % 10000}',
         name: trimmedId.split('@').first.toUpperCase(),
         identifier: trimmedId,
-        role: 'Dairy Officer',
+        role: trimmedId.contains('vet') ? 'veterinarian' : 'farmer',
+        isDemo: true,
       );
     }
 
-    // Persist user session
     final prefs = await _getPrefs();
     await prefs.setString(AppConstants.prefUserKey, matchedUser.toJsonString());
     await prefs.setBool(AppConstants.prefIsLoggedInKey, true);
-
     return matchedUser;
+  }
+
+  @override
+  Future<User> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final newUser = UserModel(
+      id: 'DEMO-${DateTime.now().millisecondsSinceEpoch}',
+      name: name.trim(),
+      identifier: email.trim().toLowerCase(),
+      role: role.trim().toLowerCase(),
+      isDemo: true,
+    );
+    final prefs = await _getPrefs();
+    await prefs.setString(AppConstants.prefUserKey, newUser.toJsonString());
+    await prefs.setBool(AppConstants.prefIsLoggedInKey, true);
+    return newUser;
+  }
+
+  @override
+  Future<User> loginDemo({required String role}) async {
+    final cleanRole = role.toLowerCase().contains('vet') ? 'veterinarian' : 'farmer';
+    final user = cleanRole == 'veterinarian' ? _demoUsers[0] : _demoUsers[1];
+    final prefs = await _getPrefs();
+    await prefs.setString(AppConstants.prefUserKey, user.toJsonString());
+    await prefs.setBool(AppConstants.prefIsLoggedInKey, true);
+    return user;
   }
 
   @override

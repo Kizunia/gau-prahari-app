@@ -8,19 +8,27 @@ class UserModel extends User {
     required super.name,
     required super.identifier,
     required super.role,
+    super.isDemo = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String? ?? '',
+      id: json['id'] as String? ?? json['uid'] as String? ?? '',
       name: json['name'] as String? ?? '',
-      identifier: json['identifier'] as String? ?? '',
-      role: json['role'] as String? ?? 'Dairy Farmer',
+      identifier: json['identifier'] as String? ?? json['email'] as String? ?? '',
+      role: json['role'] as String? ?? 'farmer',
+      isDemo: json['isDemo'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'identifier': identifier, 'role': role};
+    return {
+      'id': id,
+      'name': name,
+      'identifier': identifier,
+      'role': role,
+      'isDemo': isDemo,
+    };
   }
 
   String toJsonString() => jsonEncode(toJson());
@@ -34,6 +42,7 @@ class UserModel extends User {
       name: user.name,
       identifier: user.identifier,
       role: user.role,
+      isDemo: user.isDemo,
     );
   }
 }

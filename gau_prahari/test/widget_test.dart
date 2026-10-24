@@ -24,6 +24,38 @@ class MockAuthRepository implements AuthRepository {
       name: 'Test Vet',
       identifier: identifier,
       role: 'Field Veterinarian',
+      isDemo: true,
+    );
+    _isLoggedIn = true;
+    return _currentUser!;
+  }
+
+  @override
+  Future<User> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    _currentUser = User(
+      id: 'USR-TEST',
+      name: name,
+      identifier: email,
+      role: role,
+      isDemo: true,
+    );
+    _isLoggedIn = true;
+    return _currentUser!;
+  }
+
+  @override
+  Future<User> loginDemo({required String role}) async {
+    _currentUser = User(
+      id: 'USR-TEST',
+      name: 'Test Vet',
+      identifier: 'test@gauprahari.org',
+      role: role,
+      isDemo: true,
     );
     _isLoggedIn = true;
     return _currentUser!;
@@ -54,8 +86,6 @@ void main() {
 
   testWidgets('App renders LoginScreen when unauthenticated', (WidgetTester tester) async {
     setPhoneSize(tester);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
@@ -66,7 +96,6 @@ void main() {
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
-    // Verify brand header and login elements appear (English locale)
     expect(find.text('Gau-Prahari'), findsOneWidget);
     expect(find.text('Early Bovine Mastitis Forecasting'), findsOneWidget);
     expect(find.text('Sign In'), findsOneWidget);
@@ -76,8 +105,6 @@ void main() {
 
   testWidgets('Tapping demo chip pre-fills credentials', (WidgetTester tester) async {
     setPhoneSize(tester);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
@@ -88,20 +115,16 @@ void main() {
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
-    // Tap the 'Field Vet' demo chip
     final chip = find.text('Field Vet');
     await tester.ensureVisible(chip);
     await tester.tap(chip);
     await tester.pumpAndSettle();
 
-    // Verify text field contains prefilled email
     expect(find.text('vet@gauprahari.org'), findsOneWidget);
   });
 
   testWidgets('Shows validation errors on empty fields', (WidgetTester tester) async {
     setPhoneSize(tester);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
@@ -112,21 +135,17 @@ void main() {
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
-    // Tap login button with empty fields
     final submitBtn = find.text('Sign In to Gau-Prahari');
     await tester.ensureVisible(submitBtn);
     await tester.tap(submitBtn);
     await tester.pumpAndSettle();
 
-    // Verify validation errors appear
     expect(find.text('Please enter your Email or Officer/Farmer ID'), findsOneWidget);
     expect(find.text('Please enter your password'), findsOneWidget);
   });
 
   testWidgets('Successful login navigates to CowSelectionScreen', (WidgetTester tester) async {
     setPhoneSize(tester);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
 
     final mockRepo = MockAuthRepository();
     final authController = AuthController(authRepository: mockRepo);
@@ -137,19 +156,16 @@ void main() {
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
 
-    // Tap demo chip to fill fields
     final chip = find.text('Field Vet');
     await tester.ensureVisible(chip);
     await tester.tap(chip);
     await tester.pumpAndSettle();
 
-    // Tap submit button
     final submitBtn = find.text('Sign In to Gau-Prahari');
     await tester.ensureVisible(submitBtn);
     await tester.tap(submitBtn);
     await tester.pumpAndSettle();
 
-    // Verify navigation to CowSelectionScreen
     expect(find.text('Select Animal for Analysis'), findsOneWidget);
     expect(find.text('COW-104'), findsOneWidget);
   });

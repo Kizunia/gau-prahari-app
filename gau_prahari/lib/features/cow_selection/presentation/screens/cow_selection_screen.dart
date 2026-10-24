@@ -10,6 +10,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../shared/widgets/language_selector.dart';
 import '../../../voice_assistant/presentation/widgets/voice_assistant_button.dart';
 import 'qr_scanner_screen.dart';
+import '../../../vet_review/presentation/screens/farmer_review_requests_screen.dart';
 
 class CowSelectionScreen extends StatefulWidget {
   const CowSelectionScreen({super.key});
@@ -41,22 +42,27 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
         title: Text(t.translate('appName')),
         actions: [
           IconButton(
-            tooltip: t.translate('scanQrCode'),
+            tooltip: t.translate('myReviewRequests'),
+            visualDensity: VisualDensity.compact,
             icon: const Icon(
-              Icons.qr_code_scanner_rounded,
+              Icons.assignment_outlined,
               color: AppColors.primary,
             ),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const FarmerReviewRequestsScreen(),
+                ),
               );
             },
           ),
+
           const VoiceAssistantButton(screenName: 'cow_selection', contextData: {'screen': 'Cow Selection', 'action': 'Viewing cattle herd and selecting animal for diagnostics'}),
           const LanguageSelector(),
           const SizedBox(width: 8),
           IconButton(
             tooltip: t.translate('signOut'),
+            visualDensity: VisualDensity.compact,
             icon: const Icon(
               Icons.logout_rounded,
               color: AppColors.textSecondary,
