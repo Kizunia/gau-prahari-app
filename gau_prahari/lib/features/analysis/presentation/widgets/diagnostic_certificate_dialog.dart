@@ -32,6 +32,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
         : (isModRisk ? AppColors.warning : AppColors.success);
 
     final prob = result.probability ?? (isHighRisk ? 0.90 : 0.05);
+    final animalLabel = (cow.name != null && cow.name!.trim().isNotEmpty) ? '${cow.name} (${cow.id})' : cow.id;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -107,7 +108,7 @@ class DiagnosticCertificateDialog extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            '${t.translate("animalPrefix")} ${cow.id} (${t.translate("tagPrefix")} ${cow.tagNumber})',
+                            '${t.translate("animalPrefix")} $animalLabel (${t.translate("tagPrefix")} ${cow.tagNumber})',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

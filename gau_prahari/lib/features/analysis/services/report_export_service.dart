@@ -26,7 +26,8 @@ class ReportExportService {
     buffer.writeln('🐄 *GAU-PRAHARI CLINICAL MASTITIS REPORT* 🐄');
     buffer.writeln('----------------------------------------');
     buffer.writeln('📅 *Date/Time:* ${DateTime.now().toLocal().toString().substring(0, 16)}');
-    buffer.writeln('🏷️ *Animal ID:* ${cow.id} (Tag: ${cow.tagNumber})');
+    final cowLabel = (cow.name != null && cow.name!.trim().isNotEmpty) ? '${cow.name} (ID: ${cow.id})' : cow.id;
+    buffer.writeln('🏷️ *Animal:* $cowLabel (Tag: ${cow.tagNumber})');
     buffer.writeln('🧬 *Breed:* ${cow.breed} | *Lactation:* ${cow.lactationStage}');
     buffer.writeln('----------------------------------------');
     buffer.writeln('$statusEmoji *MASTITIS RISK LEVEL:* *${result.riskLevel}*');

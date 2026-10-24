@@ -6,6 +6,7 @@ class Cow {
   final int ageYears;
   final String lactationStage; // e.g., Early Lactation (Day 42)
   final String status; // 'Ready for Test', 'Testing', 'At Risk', etc.
+  final String? name; // Optional farmer-assigned name, e.g., 'Ganga'
 
   const Cow({
     required this.id,
@@ -14,7 +15,33 @@ class Cow {
     required this.ageYears,
     required this.lactationStage,
     this.status = 'Ready for Test',
+    this.name,
   });
+
+  /// Returns a display label: farmer name if set, otherwise the cow ID.
+  String get displayName => (name != null && name!.trim().isNotEmpty) ? name! : id;
+
+  /// Returns a copy of this cow with the given fields replaced.
+  Cow copyWith({
+    String? id,
+    String? tagNumber,
+    String? breed,
+    int? ageYears,
+    String? lactationStage,
+    String? status,
+    String? name,
+    bool clearName = false,
+  }) {
+    return Cow(
+      id: id ?? this.id,
+      tagNumber: tagNumber ?? this.tagNumber,
+      breed: breed ?? this.breed,
+      ageYears: ageYears ?? this.ageYears,
+      lactationStage: lactationStage ?? this.lactationStage,
+      status: status ?? this.status,
+      name: clearName ? null : (name ?? this.name),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -24,6 +51,7 @@ class Cow {
       'age_years': ageYears,
       'lactation_stage': lactationStage,
       'status': status,
+      if (name != null) 'name': name,
     };
   }
 
@@ -35,6 +63,7 @@ class Cow {
       ageYears: (json['age_years'] as num?)?.toInt() ?? 4,
       lactationStage: json['lactation_stage'] as String? ?? 'Lactating',
       status: json['status'] as String? ?? 'Ready for Test',
+      name: json['name'] as String?,
     );
   }
 

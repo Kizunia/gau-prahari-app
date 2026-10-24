@@ -187,5 +187,18 @@
   "tissueContact": "Tissue Contact",
   "contactDetected": "Contact Detected",
   "noContact": "No Contact",
-  "syncCollarData": "Capture & Proceed with Collar Data"
+  "syncCollarData": "Capture & Proceed with Collar Data",
+  "addCow": "Add Cow",
+  "editName": "Edit Name",
+  "giveName": "Give a Name",
+  "saveName": "Save Name",
+  "cowName": "Cow Name (optional)",
+  "cowNameHint": "e.g., Ganga, Lakshmi, Radha...",
+  "cowIdLabel": "Cow ID *",
+  "rfidTagLabel": "RFID / Ear Tag",
+  "breedLabel": "Breed",
+  "ageLabel": "Age (years)",
+  "lactationStageLabel": "Lactation Stage",
+  "cowIdRequired": "Cow ID is required",
+  "editCow": "Edit Cow"
 }

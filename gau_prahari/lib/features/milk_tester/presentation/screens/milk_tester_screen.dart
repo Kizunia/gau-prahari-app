@@ -54,7 +54,7 @@ class MilkTesterScreen extends StatelessWidget {
                   const Icon(Icons.pets_rounded, size: 14, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
-                    cow.id,
+                    cow.displayName,
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,

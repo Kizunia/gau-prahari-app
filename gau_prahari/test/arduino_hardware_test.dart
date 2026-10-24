@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gau_prahari/core/localization/app_localizations.dart';
 import 'package:gau_prahari/features/cow_selection/domain/entities/cow.dart';
 import 'package:gau_prahari/features/milk_tester/data/repositories/hardware_milk_tester.dart';
 import 'package:gau_prahari/features/milk_tester/data/services/arduino_data_parser.dart';

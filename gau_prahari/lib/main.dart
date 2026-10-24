@@ -9,6 +9,8 @@ import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/cow_selection/data/repositories/cow_repository_impl.dart';
+import 'features/cow_selection/presentation/controllers/cow_controller.dart';
 import 'features/cow_selection/presentation/screens/cow_selection_screen.dart';
 
 void main() async {
@@ -16,6 +18,7 @@ void main() async {
 
   final AuthRepository authRepository = AuthRepositoryImpl();
   final authController = AuthController(authRepository: authRepository);
+  final cowController = CowController(repository: CowRepositoryImpl());
 
   // Load locale preference and auth session in parallel
   final localeController = LocaleController();
@@ -28,6 +31,7 @@ void main() async {
     GauPrahariApp(
       authController: authController,
       localeController: localeController,
+      cowController: cowController,
     ),
   );
 }
@@ -35,11 +39,13 @@ void main() async {
 class GauPrahariApp extends StatelessWidget {
   final AuthController authController;
   final LocaleController localeController;
+  final CowController? cowController;
 
   const GauPrahariApp({
     super.key,
     required this.authController,
     required this.localeController,
+    this.cowController,
   });
 
   @override
@@ -48,6 +54,9 @@ class GauPrahariApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<AuthController>.value(value: authController),
         ChangeNotifierProvider<LocaleController>.value(value: localeController),
+        ChangeNotifierProvider<CowController>(
+          create: (_) => cowController ?? CowController(repository: CowRepositoryImpl()),
+        ),
       ],
       child: Consumer<LocaleController>(
         builder: (context, localeCtrl, _) {
