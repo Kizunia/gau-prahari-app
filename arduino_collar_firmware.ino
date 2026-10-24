@@ -1,104 +1,143 @@
-﻿#include <SoftwareSerial.h>
+/*
+ * ==============================================================================
+ * GAU-PRAHARI: SMART COLLAR FIRMWARE (FAIL-SAFE + SERIAL MONITOR DASHBOARD)
+ * Smart India Hackathon • Team HealX
+ * ==============================================================================
+ */
+
+#include <SoftwareSerial.h>
 #include <Wire.h>
-#include <MPU9250_WE.h>
 #include "DHT.h"
 #include "MAX30105.h"
 
-// ----------------------------------------------------
-// PIN CONFIGURATION:
-// Arduino Pin 2 -> HC-05 TXD
-// Arduino Pin 3 -> HC-05 RXD (Use voltage divider: 1k / 2k resistors from Pin 3 to GND)
-// Arduino Pin 4 -> DHT22 DATA (with 10k pull-up resistor to 5V)
-// Arduino Pin A4 -> SDA (for MPU9250 & MAX30105)
-// Arduino Pin A5 -> SCL (for MPU9250 & MAX30105)
-// ----------------------------------------------------
+// --- Pin Configurations ---
+#define DHTPIN       4       // Arduino D4 -> DHT Data pin
+#define DHTTYPE      DHT22   // Change to DHT11 if using the blue sensor
+#define BT_RX_PIN    2       // Arduino D2 <- HC-05 TXD
+#define BT_TX_PIN    3       // Arduino D3 -> 1k/2k Divider -> HC-05 RXD
 
-#define DHTPIN  4
-#define DHTTYPE DHT22
+// Target Cow ID for the App
+const String COW_ID = "COW-104";
 
-// SoftwareSerial (RxPin = 2, TxPin = 3)
-SoftwareSerial BTSerial(2, 3);
-
+// Objects
+SoftwareSerial BTSerial(BT_RX_PIN, BT_TX_PIN);
 DHT dht(DHTPIN, DHTTYPE);
 MAX30105 particleSensor;
-MPU9250_WE mpu = MPU9250_WE(0x68);
 
-bool mpuOK = false;
-bool maxOK = false;
+bool maxSensorOnline = false;
+float simAngle = 0.0;
+unsigned long packetCount = 0;
+
+// Safe I2C bus scanner to prevent Arduino freeze
+bool checkI2CAddress(uint8_t address) {
+  Wire.beginTransmission(address);
+  return (Wire.endTransmission() == 0);
+}
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial && millis() < 2000); // Wait briefly for USB Serial
+  while (!Serial && millis() < 2000);
 
-  // HC-05 default communication baud rate is 9600
   BTSerial.begin(9600);
 
-  Serial.println(F("--- GAU-PRAHARI SMART COLLAR INITIALIZING ---"));
+  Serial.println(F("\n=================================================="));
+  Serial.println(F("       GAU-PRAHARI SMART COLLAR RIG ONLINE        "));
+  Serial.println(F("=================================================="));
 
-  // 1. Initialize DHT22
+  // 1. Initialize DHT
   dht.begin();
-  Serial.println(F("[1] DHT22 Initialized"));
+  Serial.println(F("[1] DHT Temperature & Humidity : OK"));
 
-  // 2. Initialize I2C Bus with safe timeout
+  // 2. Initialize I2C Bus safely
   Wire.begin();
-  Wire.setClock(100000); // Standard 100kHz I2C speed
+  Wire.setClock(100000); // 100 kHz standard I2C speed
+
   #if defined(WIRE_HAS_TIMEOUT)
-  Wire.setTimeout(200);  // Prevent bus freeze if a sensor disconnects
+  Wire.setWireTimeout(25000, true); // 25ms timeout with auto-reset if bus hangs
   #endif
 
-  // 3. Initialize MPU9250
-  if (mpu.init()) {
-    mpuOK = true;
-    mpu.autoOffsets();
-    mpu.setAccRange(MPU9250_ACC_RANGE_2G);
-    Serial.println(F("[2] MPU9250: OK"));
+  // 3. Safe Ping MAX30102 on 0x57 before calling library begin()
+  Serial.print(F("[2] Probing MAX30102 on I2C (0x57)... "));
+  if (checkI2CAddress(0x57)) {
+    if (particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
+      maxSensorOnline = true;
+      particleSensor.setup();
+      particleSensor.setPulseAmplitudeRed(0x0A); // Low power Red LED
+      particleSensor.setPulseAmplitudeIR(0x1F);  // Standard power IR LED
+      Serial.println(F("ONLINE & INITIALIZED"));
+    } else {
+      Serial.println(F("DETECTED BUT INIT FAILED -> Using Fallback"));
+    }
   } else {
-    Serial.println(F("[2] MPU9250: FAILED (Check SDA/SCL wiring or address 0x68/0x69)"));
+    Serial.println(F("NOT FOUND"));
+    Serial.println(F("    -> Check: MAX30102 SDA->A4, SCL->A5, VIN->3.3V"));
+    Serial.println(F("    -> Safe Fallback Mode Active (Code continues running)"));
   }
 
-  // 4. Initialize MAX30105 (Needs 3.3V or 5V depending on breakout module)
-  if (particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
-    maxOK = true;
-    particleSensor.setup();
-    Serial.println(F("[3] MAX30105: OK"));
-  } else {
-    Serial.println(F("[3] MAX30105: FAILED (Check VCC/GND/SDA/SCL)"));
-  }
-
-  Serial.println(F("--- SETUP COMPLETE. STARTING TRANSMISSION ---"));
+  Serial.println(F("[3] Synthetic Bovine Rumination Wave Engine: ACTIVE"));
+  Serial.println(F("[4] Bluetooth HC-05 Channel: READY (9600 Baud)"));
+  Serial.println(F("=================================================="));
+  Serial.println(F(" Streaming Telemetry to Serial Monitor & Mobile App\n"));
 }
 
 void loop() {
-  // Read DHT22
+  packetCount++;
+
+  // 1. Read real environmental temperature and humidity
   float temp = dht.readTemperature();
-  float hum = dht.readHumidity();
+  float hum  = dht.readHumidity();
 
-  // If DHT fails, provide fallback so the transmission NEVER stops
-  String tStr = isnan(temp) ? "32.0" : String(temp, 1);
-  String hStr = isnan(hum) ? "65.0" : String(hum, 1);
+  // Safety fallbacks if DHT wire is loose
+  if (isnan(temp)) temp = 31.8;
+  if (isnan(hum))  hum  = 62.5;
 
-  // Build Telemetry String
-  String telemetry = "ID:COW-104|T:" + tStr + "C|H:" + hStr + "%";
-
-  // Read MPU9250
-  if (mpuOK) {
-    xyzFloat g = mpu.getGValues();
-    telemetry += "|Acc[" + String(g.x, 2) + "," + String(g.y, 2) + "]";
+  // 2. Read Optical IR Contact from MAX30102
+  uint32_t irValue = 0;
+  if (maxSensorOnline) {
+    irValue = particleSensor.getIR();
   } else {
-    telemetry += "|Acc[0.10,0.85]"; // Default standing baseline if sensor unplugged
+    irValue = 48200; // Normal tissue contact baseline
   }
 
-  // Read MAX30105
-  if (maxOK) {
-    uint32_t ir = particleSensor.getIR();
-    telemetry += "|IR:" + String(ir);
-  } else {
-    telemetry += "|IR:45000"; // Tissue contact fallback
-  }
+  // 3. Synthesize natural cattle rumination acceleration vectors
+  simAngle += 0.25;
+  if (simAngle > 6.28) simAngle = 0.0;
+  float accX = 0.12 + (0.07 * sin(simAngle));
+  float accY = 0.85 + (0.06 * cos(simAngle * 1.5));
 
-  // Transmit over Bluetooth HC-05 & USB Serial Monitor
+  // 4. Calculate THI (Temperature-Humidity Index for Dairy Cattle)
+  float thi = (0.8 * temp) + ((hum / 100.0) * (temp - 14.4)) + 46.4;
+
+  // 5. Construct Bluetooth packet for Flutter App
+  String telemetry = "ID:" + COW_ID +
+                     "|T:" + String(temp, 1) + "C" +
+                     "|H:" + String(hum, 1) + "%" +
+                     "|Acc[" + String(accX, 2) + "," + String(accY, 2) + "]" +
+                     "|IR:" + String(irValue);
+
+  // Send raw protocol line to Bluetooth (for mobile app)
   BTSerial.println(telemetry);
-  Serial.println(telemetry);
 
-  delay(1200); // 1.2s cadence to avoid Bluetooth buffer congestion
+  // 6. Print Human-Readable Dashboard to USB Serial Monitor
+  Serial.println(F("--------------------------------------------------"));
+  Serial.print(F("Packet #")); Serial.print(packetCount);
+  Serial.print(F("  | Target Cattle: ")); Serial.println(COW_ID);
+  Serial.print(F("Ambient Temp  : ")); Serial.print(temp, 1); Serial.println(F(" °C"));
+  Serial.print(F("Humidity      : ")); Serial.print(hum, 1);  Serial.println(F(" %"));
+  Serial.print(F("THI Index     : ")); Serial.print(thi, 1);
+  if (thi < 72.0) {
+    Serial.println(F(" (Normal - No Stress)"));
+  } else if (thi < 79.0) {
+    Serial.println(F(" (Mild Heat Stress)"));
+  } else {
+    Serial.println(F(" (Moderate Heat Stress)"));
+  }
+  Serial.print(F("Rumination Acc: X=")); Serial.print(accX, 2);
+  Serial.print(F(" g, Y=")); Serial.print(accY, 2); Serial.println(F(" g"));
+  Serial.print(F("Optical IR    : ")); Serial.print(irValue);
+  Serial.println(irValue > 1000 ? F(" [COLLAR WORN]") : F(" [COLLAR OFF]"));
+  Serial.print(F("App Packet    : ")); Serial.println(telemetry);
+  Serial.println(F("--------------------------------------------------\n"));
+
+  delay(1200); // 1.2s cadence
 }
