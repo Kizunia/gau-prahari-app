@@ -187,5 +187,18 @@
   "tissueContact": "ऊतक संपर्क",
   "contactDetected": "संपर्क पहचाना गया",
   "noContact": "कोई संपर्क नहीं",
-  "syncCollarData": "कॉलर डेटा कैप्चर करें और आगे बढ़ें"
+  "syncCollarData": "कॉलर डेटा कैप्चर करें और आगे बढ़ें",
+  "addCow": "गाय जोड़ें",
+  "editName": "नाम बदलें",
+  "giveName": "नाम दें",
+  "saveName": "नाम सहेजें",
+  "cowName": "गाय का नाम (वैकल्पिक)",
+  "cowNameHint": "उदा., गंगा, लक्ष्मी, राधा...",
+  "cowIdLabel": "गाय आईडी *",
+  "rfidTagLabel": "आरएफआईडी / कान टैग",
+  "breedLabel": "नस्ल",
+  "ageLabel": "आयु (वर्ष)",
+  "lactationStageLabel": "दुग्ध अवस्था",
+  "cowIdRequired": "गाय आईडी आवश्यक है",
+  "editCow": "गाय संपादित करें"
 }
