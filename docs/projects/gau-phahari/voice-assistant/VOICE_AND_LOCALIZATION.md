@@ -2,76 +2,56 @@
 
 ## 1. Language rule
 
-The assistant must use the language currently selected in the app. Reuse:
+Use the existing LocaleController as the single source of selected language. Current supported codes are English (en), Hindi (hi), and Marathi (mr). Do not implement automatic speech-language detection in this MVP.
 
-`gau_prahari/lib/core/localization/locale_controller.dart`
+Read the current app language for each new request and map it to an identifier supported by the chosen speech-recognition and TTS plugin. The plugins may use different locale-ID formats. Check device support instead of assuming a voice is installed.
 
-The current supported language codes are:
+Existing localization uses AppLocalizations and JSON files in the app's language assets. New assistant UI strings must use the existing localization mechanism. Do not hard-code user-facing status/error labels only in English.
 
-| App language code | Language |
-|---|---|
-| `en` | English |
-| `hi` | Hindi |
-| `mr` | Marathi |
+## 2. Packages
 
-Do not add language auto-detection for the initial implementation. When the user changes the app language, subsequent speech recognition and generated replies should use the new language. Previously saved messages remain unchanged.
+- speech_to_text for speech recognition.
+- flutter_tts for spoken replies.
 
-## 2. Proposed packages
+Confirm package versions and platform setup are compatible with the repository's Flutter/Dart SDK before adding them. For this MVP, speech-to-text and speech output run through the device/plugin; no separate speech API key is planned.
 
-- Speech recognition: `speech_to_text`.
-- Text-to-speech: `flutter_tts`.
+## 3. User-facing states
 
-Check the selected package versions and platform setup against the Flutter/Dart version in this repository before implementation. These packages depend on platform capabilities; the availability of a Hindi or Marathi recognition/TTS voice can vary by device and installed speech services.
+Provide visible and localized states for:
+- Idle / ready.
+- Listening.
+- Processing.
+- Speaking.
+- Recoverable error.
 
-## 3. Locale mapping
+Also localize microphone permission denied, no speech detected, cancelled, language/voice unavailable, network failure, Gemini API/configuration failure, and unsupported command feedback.
 
-Read the current app locale from `LocaleController.locale.languageCode`; do not maintain a second independent language setting in the voice assistant.
-
-Map the app's language code to the exact locale identifier format expected by the selected plugin. Recognition and TTS plugins may use different identifier formats. Query available locales/voices where supported and select a matching locale. If no matching voice is available, tell the user in the best available localized form that voice support is unavailable and keep text interaction usable.
-
-Do not silently switch to a different language or pretend speech recognition succeeded.
+The assistant interface must display text as well as speak replies. Do not rely on voice alone for important result/error details.
 
 ## 4. Interaction lifecycle
 
-The controller should expose a small explicit state model, for example:
+1. User taps the microphone.
+2. Stop any prior TTS output and request/check microphone permission.
+3. Start recognition in the selected language.
+4. Stop on final result, cancellation, plugin timeout, or user action.
+5. Persist the recognized transcript.
+6. In Phase 1, use the temporary local responder. In Phase 2 onward, call Gemini.
+7. Validate the response and, starting in Phase 3, dispatch any allowed action through the designated Flutter handler.
+8. Persist the response/action outcome.
+9. Speak the response in the currently selected language and return to idle.
 
-- `idle` — ready to accept a voice request.
-- `listening` — waiting for speech.
-- `processing` — transcript stored and AI request in progress.
-- `speaking` — spoken response in progress.
-- `error` — recoverable failure with a user-readable message.
+Prevent overlapping recognition sessions, duplicate requests caused by repeated taps, and stale callbacks speaking a response from a superseded request. Support cancellation with a clear visible state.
 
-Expected lifecycle:
+## 5. Device capability and fallback
 
-1. Farmer taps the microphone.
-2. Request/check microphone and speech-recognition permissions.
-3. Start listening in the selected language.
-4. Stop on final result, user cancellation, or plugin timeout.
-5. Persist the final transcript.
-6. Submit it to the assistant controller.
-7. Wait for a valid AI response and execute an approved action if present.
-8. Persist the reply and speak it in the selected language.
-9. Return to `idle`.
+Recognition and TTS support for Hindi/Marathi depends on the Android device and installed speech services. On an unsupported language, explain the limitation in the best available localized form and keep touch-based app controls usable. Do not silently change the user's language or pretend recognition succeeded.
 
-Avoid concurrent speech-recognition sessions or overlapping AI requests. When a new listening session starts, stop ongoing TTS output first. Provide a clear way to cancel listening and prevent a stale callback from speaking an old response after the user has started a new request.
+Before implementation, inspect the target-platform manifests and plugin documentation. Add only permissions/configuration actually required by the selected package versions. Test permission-granted and permission-denied behavior on the real demo device.
 
-## 5. Spoken response style
+## 6. Speech response style
 
-- Keep the spoken response short; details can also appear as on-screen text.
-- Give one step at a time for navigation and hardware workflows.
-- Avoid jargon where a simpler phrase works.
-- Use the selected locale for both recognition and TTS.
-- Do not use voice output as a substitute for displaying a persistent error or important analysis result.
-- If a response contains long numerical detail, summarize it verbally and retain the full supported detail on screen.
-
-## 6. Permissions and platform configuration
-
-During implementation, inspect the Android manifest and any other supported platform setup. Add only the microphone/speech permissions and user-facing permission descriptions required by the selected packages and target platforms. For Android, handle runtime permission denial gracefully. If iOS remains a supported build target, add the required iOS usage-description entries as specified by the package documentation.
-
-Do not modify permissions speculatively before choosing package versions. Verify the actual permission requirements and test both granted and denied flows.
-
-## 7. User-visible feedback
-
-The microphone control should make the state easy to understand with icon/label changes. At minimum, visually distinguish listening, processing, and speaking. Use localized short feedback for permission denial, unavailable language voice, no speech detected, network failure, and AI configuration failure.
-
-A failed voice request must not crash the main Gau-Prahari workflow. The farmer should still be able to use existing touch controls.
+- Keep spoken responses short and actionable.
+- Give one workflow step at a time.
+- Preserve the original language of old messages when the app's language changes.
+- Use the currently selected language for new replies, UI feedback, and TTS where supported.
+- Do not claim an action succeeded before the actual Flutter action handler reports success.

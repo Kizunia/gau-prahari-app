@@ -2,89 +2,78 @@
 
 ## 1. Decision
 
-Persist conversation text on the device using SQLite, with `sqflite` as the proposed Flutter package. Conversation history must survive app restarts and must not depend on the AI provider being available.
+Store conversation text locally in SQLite using sqflite. History must survive normal app restarts and must not depend on the AI service being available. It is conversation history, not the source of truth for cow medical records, telemetry, milk measurements, or analysis results.
 
-The database is for assistant conversations only. Do not repurpose it as the source of truth for cow medical data, collar telemetry, milk measurements, or analysis records.
+## 2. Required user-facing behavior
 
-## 2. Stored data
+Phase 1 must include:
+- A transcript view showing user messages and assistant replies.
+- A New conversation action.
+- A simple list of previous conversations.
+- The ability to reopen a previous conversation.
+- Restoration of the last-opened conversation after app restart.
 
-Persist:
-
-- Conversation identifier and timestamps.
-- User transcript text.
-- Assistant reply text.
-- Optional screen name associated with a message.
-- Optional allowlisted action name and execution outcome.
-
-Do not persist raw audio recordings. Do not store the API key in SQLite. Do not store entire AI request/response payloads if they contain unrelated app or user context.
+Starting a new conversation must not delete old conversations. Conversation deletion is optional and is not a P0 requirement.
 
 ## 3. Suggested schema
 
-Use UTC Unix epoch milliseconds for timestamps. Adapt names to the repository's existing naming conventions if needed.
+Timestamps use UTC Unix epoch milliseconds. Adjust names to existing conventions where helpful.
 
-### `conversations`
-
-| Column | Type | Purpose |
-|---|---|---|
-| `id` | TEXT primary key | Stable conversation ID generated on the device |
-| `owner_id` | TEXT nullable | Local current-user identifier, if available, to avoid mixing demo users |
-| `title` | TEXT nullable | Short local label; may be derived from the first user message |
-| `created_at` | INTEGER | Creation time in UTC milliseconds |
-| `updated_at` | INTEGER | Time of the latest message |
-| `is_archived` | INTEGER | Optional boolean-like flag, default 0 |
-
-### `messages`
+### conversations
 
 | Column | Type | Purpose |
 |---|---|---|
-| `id` | TEXT primary key | Stable message ID generated on the device |
-| `conversation_id` | TEXT not null | References `conversations.id` |
-| `role` | TEXT not null | `user` or `assistant` |
-| `content` | TEXT not null | Transcript or spoken reply text |
-| `created_at` | INTEGER | UTC timestamp in milliseconds |
-| `screen_name` | TEXT nullable | Current screen at message time, if known |
-| `action_name` | TEXT nullable | Validated action name, when one was attempted |
-| `action_status` | TEXT nullable | For example `succeeded`, `failed`, or `not_applicable` |
+| id | TEXT primary key | Stable local conversation ID |
+| owner_id | TEXT nullable | Existing authenticated User.id, to keep demo users separate |
+| title | TEXT nullable | Short label based on first message or a simple default |
+| created_at | INTEGER | Creation time |
+| updated_at | INTEGER | Time of last message |
+| last_opened_at | INTEGER | Updated when the user opens/resumes this conversation |
+| is_archived | INTEGER | Optional flag, default 0 |
 
-Recommended database constraints:
+### messages
 
-- Enable SQLite foreign-key support.
-- Add an index on `messages(conversation_id, created_at)`.
-- Delete child messages when a conversation is deleted.
-- Use a database version and migration path, even though the initial schema is small.
+| Column | Type | Purpose |
+|---|---|---|
+| id | TEXT primary key | Stable local message ID |
+| conversation_id | TEXT not null | Foreign key to conversations.id |
+| role | TEXT not null | user or assistant |
+| content | TEXT not null | Recognized transcript or assistant text |
+| created_at | INTEGER | Message timestamp |
+| screen_name | TEXT nullable | Screen known when the message was submitted |
+| action_name | TEXT nullable | Validated action attempted in Phase 3+ |
+| action_status | TEXT nullable | succeeded, failed, or not_applicable |
 
-## 4. History behavior
+Requirements:
+- Enable SQLite foreign keys.
+- Add an index on messages(conversation_id, created_at).
+- Delete child messages if a conversation is deleted.
+- Version the database and support a basic schema migration path.
 
-1. On assistant initialization, load the most recently updated non-archived conversation for the current local user.
-2. If one does not exist, create a new conversation when the first message is submitted.
-3. Save the user's recognized transcript promptly, before waiting for the hosted AI response.
-4. Save the assistant reply after the response has been parsed.
-5. Save action name/outcome when an action was requested and handled.
-6. Update the conversation's `updated_at` timestamp after each new message.
-7. Provide a “New conversation” action that creates a fresh conversation. It should not silently delete older history.
-8. If a “Delete conversation” action is included, delete that conversation and its messages only after the user explicitly chooses deletion.
+## 4. Storage lifecycle
 
-If the existing local auth model exposes a stable identifier, use it as `owner_id` only to keep demo users' histories separate on the device. Do not add a new authentication system for this feature.
+1. Create a conversation when the first message is submitted if no active conversation exists.
+2. Save the user transcript promptly before starting the AI request.
+3. Save the assistant response after validating it.
+4. Update updated_at after each message and last_opened_at when a conversation is selected/opened.
+5. List conversations for the current local user, ordered by last_opened_at or updated_at as appropriate.
+6. Restore the most recently opened conversation at app start when it belongs to the current user; otherwise create one on first use.
+7. Keep previous conversations when New conversation is selected.
+8. When the current user logs out or another demo user logs in, do not display conversations owned by the other user.
 
-## 5. Context sent to AI
+Use the existing User.id where available; do not add a new authentication system.
 
-The database may retain the full local history, but each AI request should include only a bounded recent window—default: the most recent 20 messages for the active conversation, ordered oldest-to-newest within that window.
+## 5. AI context window
 
-Include the new user transcript exactly once. Avoid the common bug of sending it once as the latest message and again as an extra prompt string.
+The local DB may retain the full conversation history. For each Gemini request, supply only the latest 20 messages from the active conversation, ordered oldest-to-newest within that window. Include the current user transcript once, not twice.
 
-The request should also include a compact current-screen context object. See [AI integration](./AI_INTEGRATION.md). Do not send the whole local database or unrelated cow records.
+The recent message window is a default appropriate for the demo. Do not send the entire local database or unrelated cow records.
 
-## 6. Restart and error behavior
+## 6. Failure behavior and privacy
 
-- After a process restart, the app can recover the most recent conversation from SQLite.
-- If the database is empty, create a conversation on demand.
-- If a write fails, show a non-blocking error and log a diagnostic without logging secrets.
-- If the hosted AI API fails, keep the saved user transcript and add a localized fallback assistant message when appropriate.
-- Database initialization failure must not crash app startup; disable history features gracefully and show a clear error.
-- If the user switches language mid-conversation, preserve prior messages in their original language and use the currently selected language for new replies.
-
-## 7. Device-local semantics
-
-History is local to that installation and is not synchronized to another phone. It may be removed if the app is uninstalled or its local app data is cleared. Keep a basic way to start a new conversation; conversation deletion is useful but should remain a small feature.
-
-Conversation messages are sent to the selected hosted AI provider when the assistant responds. The UI or README should not imply that messages remain exclusively on the phone after an AI request.
+- If Gemini fails, retain the user transcript and display a localized error. A fallback assistant message may be saved if it is clearly identified as a fallback and not confused with an AI-generated answer.
+- A database initialization/write failure must not crash app startup or the main Gau-Prahari workflow. Show a useful error and make the assistant's storage limitation clear.
+- Do not persist raw audio, API keys, authorization headers, or full provider payloads.
+- On language change, keep old messages unchanged; new responses follow the current app selection.
+- Local history is not synchronized. It may be removed when app data is cleared or the app is uninstalled.
+- Conversation text/context is sent to the selected hosted AI provider when requesting a response. Do not claim it stays exclusively on the device.

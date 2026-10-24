@@ -1,112 +1,74 @@
-# AI Integration and API Configuration
+# Gemini AI Integration and API Configuration
 
-## 1. Decision
+## 1. Provider and model
 
-Call a hosted AI API directly from Flutter for the hackathon MVP. Use the existing `http` package unless repository inspection provides a concrete reason to replace it. Do not add a new assistant endpoint to the current FastAPI backend.
+Use Google Gemini API with initial model ID gemini-3.8-flash. Google's current model catalog lists this model as stable; availability and access must still be verified for the project/key before implementation.
 
-The provider and model are not yet selected. Choose them before wiring the API call, verify the current provider API documentation and response format, and contain provider-specific code inside `AiAssistantService`. Do not spread provider-specific logic across the controller or widgets.
+Official documentation:
+- Model catalog: https://ai.google.dev/gemini-api/docs/models
+- API key use: https://ai.google.dev/gemini-api/docs/api-key
+- Function calling: https://ai.google.dev/gemini-api/docs/function-calling
+- Structured output: https://ai.google.dev/gemini-api/docs/structured-output
 
-## 2. Configuration files
+Use the existing Flutter http dependency. Confirm the current supported REST endpoint, authentication header, request body, and response format from Google's current documentation before implementing. Do not guess an endpoint or copy a legacy response parser without checking it against the selected model/API.
 
-Planned paths:
+The assistant calls Gemini directly from Flutter for this hackathon MVP. Do not add a FastAPI assistant endpoint or alter the existing prediction API.
 
-- `gau_prahari/lib/core/config/ai_config.dart` — local configuration, ignored by Git.
-- `gau_prahari/lib/core/config/ai_config.example.dart` — tracked placeholder/template with no working key.
+## 2. Local API configuration
 
-The actual config may expose constants for the provider API key, model identifier, and endpoint needed by the selected provider. Never place a real key in this specification, the example file, logs, screenshots, tests, or a tracked source file.
+Planned files:
 
-During implementation, update `gau_prahari/.gitignore` with the exact relative path:
+- gau_prahari/lib/core/config/ai_config.dart — local config; ignored by Git.
+- gau_prahari/lib/core/config/ai_config.example.dart — tracked template with placeholders only.
 
-```gitignore
-/lib/core/config/ai_config.dart
-```
+Update gau_prahari/.gitignore to ignore the real config path. Verify the rule with git check-ignore from the Flutter package directory and confirm the file is not already tracked.
 
-Confirm with `git check-ignore -v lib/core/config/ai_config.dart` from the Flutter package directory, and confirm that the file is not already tracked before relying on the ignore rule. Keep the example config committed with a blank or obviously fake placeholder.
+Because a missing Dart import can break compilation even when tests don't need a live key, the setup instructions must tell a fresh checkout user to copy the example file to ai_config.dart and leave the key blank/placeheld when running tests. No valid API key should be required by unit/widget tests.
 
-### Hackathon-only credential trade-off
+Do not commit a real key. The team accepts that a key embedded in a compiled Flutter APK can be extracted for this controlled hackathon demo. This is not a production credential-handling pattern. Use a dedicated demo key, apply provider-supported API/quota restrictions, avoid personal/production keys, and revoke/rotate the demo key after the event.
 
-A Git-ignored Dart file prevents the local source file from being committed accidentally; it does **not** protect the key in a compiled Flutter application. A person who obtains the APK may extract the embedded key. This is an explicitly accepted demo trade-off, not a secure production pattern.
-
-For the demo, use a dedicated key with spending/quota restrictions where the provider supports them. Do not reuse a personal or production credential, and rotate/revoke the demo key after the event. No actual API key should ever be written into Git history.
+New Google AI Studio keys are currently created as authorization keys by default according to Google's API-key guide. Do not assume all keys have the same restrictions; follow the current official authentication instructions for the key that is actually created.
 
 ## 3. Request content
 
-Each AI request should contain:
+The request should include:
+- The selected app language code: en, hi, or mr.
+- Up to 20 recent messages from the active conversation.
+- The new user transcript exactly once.
+- A compact screen-context object only in Phase 4.
+- System instructions describing a short, friendly farmer-facing assistant.
+- Only action declarations supported by the current implementation phase.
 
-- The current selected language code (`en`, `hi`, or `mr`).
-- The bounded recent conversation window (see [Conversation storage](./CONVERSATION_STORAGE.md)).
-- The latest user transcript.
-- A compact, sanitized screen-context object.
-- A system instruction defining assistant behavior and allowed action names.
+Do not send the entire local DB, raw audio, API key in the prompt/body, unrelated profile data, or full cow records. Authenticate using the current documented mechanism for the selected API.
 
-Do not send raw audio, credentials, all locally stored conversations, the complete cow database, or full backend records. Send only the details needed to answer the current request.
+## 4. Internal response contract
 
-## 4. Application-level response contract
+Normalize the provider response into a typed internal result equivalent to:
 
-Normalize the provider-specific response into this internal shape before returning it to the controller:
+    reply: non-empty string
+    action: null OR { name: allowlisted string, arguments: object }
 
-```json
-{
-  "reply": "Opening the cow scanner. Please scan the QR code on the collar.",
-  "action": {
-    "name": "scan_cow",
-    "arguments": {}
-  }
-}
-```
+In Phase 2, action execution is disabled. The model must not trigger navigation during this phase.
 
-For an ordinary question with no app action:
+In Phase 3, the only executable action is scan_cow with empty arguments. The Phase 4 allowlist can expand only when the implementation adds and tests those actions.
 
-```json
-{
-  "reply": "You are on the cow selection screen. You can choose a cow or scan its QR code.",
-  "action": null
-}
-```
+A structured model output/function call is an aid to parsing, not an authorization decision. Flutter must validate action names, arguments, current state, and result. Unknown/malformed responses must not execute.
 
-Contract:
+## 5. Assistant instructions
 
-- `reply` is required and must be non-empty plain text.
-- `action` is either null or an object with a known `name` and validated arguments.
-- Unknown fields can be ignored; malformed or unknown actions must not execute.
-- Do not accept arbitrary route names, Dart method names, URLs, shell commands, SQL, or code from the AI.
-- A natural-language reply is not evidence that an action succeeded. The controller must run the action handler and use its actual outcome.
-- If the selected provider supports structured output/function calling, use it as an output aid; still validate the result in Flutter.
+Require the model to:
+- Respond in the selected app language when supported.
+- Use concise, simple instructions suitable for farmers.
+- Prefer one or two next steps at a time.
+- Use only the provided conversation and context when describing current app state.
+- Ask a short clarifying question if required context is missing.
+- Never claim an action happened before Flutter confirms it.
+- Never invent measurements, telemetry, risk scores, result factors, diagnoses, or test outcomes.
+- Explain actual analysis output as app-generated risk information, not as a definitive veterinary diagnosis.
+- Return only the response/action structure required by the current phase.
 
-## 5. Allowed AI behavior
+## 6. Error handling
 
-The system instruction should require the assistant to:
+Handle missing configuration, offline state, timeout, HTTP errors, quota/rate-limit response, invalid JSON, empty reply, and unsupported/invalid action. Use a finite timeout and typed error outcomes. Do not log keys, authorization headers, or complete sensitive request payloads. Do not retry indefinitely.
 
-1. Respond in the currently selected app language.
-2. Use simple, short, practical wording suitable for a farmer who may not be digitally experienced.
-3. Give one or two actionable steps at a time.
-4. Use only the supplied screen context and conversation for claims about the current app state.
-5. Ask a brief follow-up when required information is missing.
-6. Return only the documented action schema and allowlisted action names.
-7. Never claim to have opened a screen, connected hardware, synced data, or completed a test unless Flutter reports that the operation succeeded.
-8. Explain an existing analysis result faithfully, without inventing measurements, risk scores, factors, or diagnoses.
-9. Make clear that the app's risk output is an aid and is not a veterinary diagnosis.
-10. Refuse or give a safe alternative when asked to execute unsupported app actions.
-
-## 6. Errors and fallback
-
-Handle at least:
-
-- No internet connection.
-- Connection timeout.
-- HTTP error response.
-- Provider quota/limit response.
-- Invalid response JSON.
-- Empty reply.
-- Unknown action or invalid arguments.
-- Provider/model configuration missing.
-
-Use timeouts and return typed errors from the service. The controller should present a short localized fallback message and keep the transcript in local history. Never expose raw provider payloads, stack traces, or credentials to the user.
-
-Do not log the API key or authorization headers. Do not retry indefinitely; one small retry for a transient network failure is sufficient if implemented.
-
-## 7. Testability
-
-Keep the AI service behind an interface or injectable dependency so controller tests can supply a fake response without network access. Unit-test JSON parsing and action allowlisting independently of the live provider.
-
-Do not require a working API key to run the normal Flutter test suite.
+Tests should use a fake/injectable AI service and must not require a live network or valid key.

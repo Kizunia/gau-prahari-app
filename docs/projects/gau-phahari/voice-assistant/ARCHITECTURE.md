@@ -2,167 +2,115 @@
 
 ## 1. Architecture principles
 
-1. Keep the feature Flutter-first and small enough for a hackathon demonstration.
-2. Reuse Provider/`ChangeNotifier`, the existing locale controller, existing screens, and existing domain models.
-3. Keep UI rendering separate from speech, database, AI, and action-execution logic.
-4. Treat the AI response as untrusted input. Flutter validates every requested action before executing it.
-5. Do not change the current FastAPI mastitis inference contract to support the assistant.
-6. Keep this as a demo implementation; avoid infrastructure and abstractions that do not support the agreed use cases.
+- Keep the feature Flutter-first and small enough for a hackathon.
+- Reuse Provider, ChangeNotifier, LocaleController, existing screens, and existing domain models.
+- Separate UI, speech services, SQLite storage, AI transport, and app-action execution.
+- Treat model output as untrusted. Flutter validates action names, arguments, and preconditions.
+- Do not modify the existing FastAPI prediction endpoint or ML model.
+- Build the system incrementally in the four phases described in [FOUR_PHASE_IMPLEMENTATION.md](./FOUR_PHASE_IMPLEMENTATION.md).
 
 ## 2. High-level flow
 
-```text
-Farmer
-  |
-  v
-Voice Assistant Button
-  |
-  v
-Speech Recognition ----> recognized text
-  |
-  v
-VoiceAssistantController
-  |   - selected locale
-  |   - recent conversation history
-  |   - current screen context
-  |
-  +---------------------------> Local SQLite database
-  |
-  v
-AiAssistantService (Flutter HTTP client)
-  |
-  v
-Hosted AI API
-  |
-  v
-Structured assistant response
-  |
-  v
-Validate response and action allowlist
-  |
-  +---- reply text ----> save message ----> Text-to-Speech
-  |
-  +---- supported action ----> action handler ----> existing Flutter screen/controller
-                                                  |
-                                                  v
-                                           updated screen context
-```
+Farmer speaks → speech recognition → VoiceAssistantController → persist transcript → retrieve recent history → AiAssistantService → Gemini API → normalize/validate reply → persist reply → display and speak reply.
 
-The API provider/model is an implementation-time decision. The provider-specific request shape should not leak into the controller or UI.
+Starting in Phase 3, a valid allowlisted action may be returned from the assistant screen to the invoking authenticated screen, which dispatches the action through existing Flutter navigation. Only scan_cow is executable in Phase 3. Phase 4 adds contextual guidance grounded in real app state.
 
-## 3. Proposed feature folder
+## 3. Proposed folder structure
 
-Follow this structure unless repository inspection reveals a more natural existing convention:
+    gau_prahari/lib/features/voice_assistant/
+    ├── domain/
+    │   ├── entities/
+    │   │   ├── conversation.dart
+    │   │   └── chat_message.dart
+    │   └── services/
+    │       └── assistant_action.dart
+    ├── data/
+    │   ├── database/
+    │   │   └── conversation_database.dart
+    │   ├── repositories/
+    │   │   └── conversation_repository_impl.dart
+    │   ├── models/
+    │   │   └── assistant_response_dto.dart
+    │   └── services/
+    │       ├── speech_recognition_service.dart
+    │       ├── speech_output_service.dart
+    │       └── ai_assistant_service.dart
+    └── presentation/
+        ├── controllers/
+        │   └── voice_assistant_controller.dart
+        ├── screens/
+        │   └── voice_assistant_screen.dart
+        └── widgets/
+            └── voice_assistant_button.dart
 
-```text
-gau_prahari/lib/features/voice_assistant/
-├── domain/
-│   ├── entities/
-│   │   ├── conversation.dart
-│   │   └── chat_message.dart
-│   └── services/
-│       └── assistant_action.dart
-├── data/
-│   ├── database/
-│   │   └── conversation_database.dart
-│   ├── repositories/
-│   │   └── conversation_repository_impl.dart
-│   ├── models/
-│   │   └── assistant_response_dto.dart
-│   └── services/
-│       ├── speech_recognition_service.dart
-│       ├── speech_output_service.dart
-│       └── ai_assistant_service.dart
-└── presentation/
-    ├── controllers/
-    │   └── voice_assistant_controller.dart
-    └── widgets/
-        └── voice_assistant_button.dart
-```
-
-This is a guide, not a reason to create empty layers. Use the smallest set of files that keeps responsibilities clear.
+This is a guide, not a requirement to create empty layers. Prefer the smallest structure that keeps responsibilities clear and matches repository conventions.
 
 ## 4. Responsibilities
 
-### VoiceAssistantButton
+### Voice assistant screen and entry point
 
-- Presents a clear microphone affordance and current listening/processing state.
-- Starts or stops listening through the controller.
-- Exposes a concise status or error to the user.
-- Does not call the AI API, open the database, or navigate on its own.
+- The entry point is an app-bar action (or equivalent small top-level entry point) on authenticated workflow screens: cow selection, collar import, milk tester, and analysis result.
+- Do not display the entry point on login/register screens or while the QR scanner is active.
+- The assistant screen shows a message transcript, microphone control, voice state, New conversation, and a simple history list so previous conversations can be reopened.
+- Interface messages and controls use the existing localization system.
 
 ### VoiceAssistantController
 
-- Coordinates speech recognition, local history, AI requests, action execution, and spoken output.
-- Reads the selected language from `LocaleController`.
-- Builds each AI request from recent messages and available screen context.
-- Persists user and assistant messages.
-- Handles loading/error state and prevents overlapping requests.
-- Executes only actions accepted by the action registry.
+- Coordinates speech, local conversation history, AI requests, response presentation, and action requests.
+- Reads the selected language from LocaleController.
+- Prevents overlapping recognition sessions and duplicate AI requests.
+- Saves user messages before the network request and assistant replies after successful parsing.
+- Receives only available screen context and validated action results.
 
 ### ConversationRepository
 
-- Creates/loads conversations.
-- Inserts messages and updates conversation timestamps.
-- Retrieves recent messages in chronological order for the AI request.
-- Exposes history to the controller without putting SQL in widgets.
+- Creates and loads conversations.
+- Saves messages and action outcomes.
+- Retrieves the latest 20 messages for the active conversation in chronological order.
+- Updates conversation timestamps, including last-opened time.
+- Keeps SQL out of widgets.
 
 ### Speech services
 
-- Wrap the chosen speech-to-text and text-to-speech packages behind simple Dart interfaces.
-- Convert the selected app language to a supported platform locale identifier.
-- Surface permission, availability, and recognition errors to the controller.
+- Wrap speech_to_text and flutter_tts behind small Dart services.
+- Map the selected app language to the locale identifiers supported by each plugin.
+- Handle microphone permission, unavailable locales, recognition cancellation, no speech, and TTS failures.
 
 ### AiAssistantService
 
-- Sends the user transcript, recent conversation, language code, and sanitized screen context to the selected hosted AI provider.
-- Parses the provider response into a typed result.
-- Applies timeouts and returns typed errors.
-- Does not directly navigate or invoke hardware.
+- Encapsulates provider-specific Gemini request/authentication/response parsing.
+- Receives the current locale, latest transcript, recent history, and only the approved context fields for the current phase.
+- Uses a timeout and typed errors.
+- Does not navigate or call hardware services directly.
 
-### Assistant action registry
+### Action dispatch
 
-- Maps fixed action names to Flutter callbacks.
-- Checks whether an action is supported in the current context.
-- Calls existing screens/controllers; it must not duplicate their feature logic.
-- Returns success/failure to the controller so the reply and history remain truthful.
+- Keep a fixed allowlist and typed action response.
+- The assistant screen requests an action; the host authenticated workflow dispatches it through a known Flutter callback, preserving natural back-stack behavior.
+- The model cannot provide a route, method name, URL, SQL statement, or code to execute.
+- Use the existing QrScannerScreen for scan_cow.
+- Report action success only after the Flutter handler confirms that the action was invoked.
 
-## 5. App-wide entry point
+## 5. Authenticated-screen integration
 
-The intended interaction is available on authenticated screens, not on login/register screens.
+The current app creates MaterialApp in main.dart and uses direct Navigator.push(MaterialPageRoute(...)) calls. Add the reusable assistant entry point to the identified authenticated workflow screens rather than migrating the whole app to named routes or building a global overlay that could cover the camera.
 
-The current app has an `AuthGate`, a `MaterialApp`, and screens that push `MaterialPageRoute` directly. Inspect these exact integration points before implementation. Add the smallest viable app-level entry point or authenticated-screen wrapper that keeps the button available while existing routes are pushed.
+When an action is requested, close/return from the assistant screen in a controlled way and let the invoking screen dispatch it. Validate that the scanner opens without leaving the assistant UI in an unexpected position in the navigation stack.
 
-If a root navigator key or observer is introduced, use it only to support the assistant's known navigation/context needs. Do not migrate all screens to named routes solely for this feature.
+## 6. Context boundary
 
-## 6. Context and action boundaries
+Only add data known to the application: current screen, selected Cow, collar-history availability, current milk-measurement availability, and actual AnalysisResult fields where in scope. The source currently passes Cow to collar-import/milk tester/result screens and passes MilkMeasurement and AnalysisResult to the result screen. These objects are not automatically available to an app-wide controller; the owning screen must publish or provide the context explicitly.
 
-The assistant request can include only facts the application currently knows, such as:
-
-- Current screen or workflow step.
-- Selected cow ID and other relevant fields that already exist in the screen state.
-- Whether collar history is available.
-- Existing milk measurement or analysis result, if that data is available in memory.
-
-Do not re-derive a prediction, fabricate sensor measurements, or treat generated/simulated values as real measurements. Explain the current app result; do not generate an independent diagnosis.
-
-See [Actions and screen context](./ACTIONS_AND_CONTEXT.md).
+Never invent sensor readings, model scores, results, or diagnoses. Clear or replace context when the screen/workflow changes.
 
 ## 7. Network and backend boundary
 
-- The assistant calls a hosted AI API directly from Flutter using the existing `http` dependency unless repository inspection gives a concrete reason to select another client.
-- Do not create an assistant endpoint in FastAPI for the MVP.
-- Keep the existing FastAPI analysis API and its model behavior unchanged.
-- An AI call requires network connectivity. The local history remains available offline; AI-generated replies do not.
-- If the API is unavailable, provide a short localized fallback message and preserve the user's transcript in local history.
+- The assistant makes hosted AI requests directly from Flutter.
+- No new assistant-specific FastAPI endpoint.
+- The existing FastAPI inference flow remains unchanged.
+- SQLite history is available offline; Gemini responses require network access.
+- On network/API failure, keep the transcript saved, display a localized error/fallback, and keep touch-based app workflows usable.
 
-## 8. Dependencies to evaluate
+## 8. Dependencies
 
-The existing Flutter manifest already includes `provider`, `shared_preferences`, and `http`. Evaluate compatible versions of:
-
-- `sqflite` — SQLite persistence.
-- `path` — database path construction.
-- `speech_to_text` — speech recognition.
-- `flutter_tts` — spoken responses.
-
-Do not add dependencies until implementing the corresponding milestone. Check current Flutter/Dart compatibility and platform setup before choosing versions.
+The existing Flutter manifest includes provider, shared_preferences, http, and mobile_scanner. Evaluate compatible versions of sqflite, path, speech_to_text, and flutter_tts before adding them. Do not add a new state-management framework or dependencies unrelated to this feature.
