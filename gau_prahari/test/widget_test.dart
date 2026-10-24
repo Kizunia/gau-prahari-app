@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gau_prahari/core/localization/locale_controller.dart';
 import 'package:gau_prahari/features/auth/domain/entities/user.dart';
 import 'package:gau_prahari/features/auth/domain/repositories/auth_repository.dart';
@@ -42,6 +43,10 @@ class MockAuthRepository implements AuthRepository {
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'gau_prahari_locale': 'en'});
+  });
+
   void setPhoneSize(WidgetTester tester) {
     tester.view.physicalSize = const Size(1080, 1920);
     tester.view.devicePixelRatio = 1.0;
@@ -56,6 +61,7 @@ void main() {
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
     final localeController = LocaleController();
+    await localeController.loadSavedLocale();
 
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
@@ -77,6 +83,7 @@ void main() {
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
     final localeController = LocaleController();
+    await localeController.loadSavedLocale();
 
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
@@ -100,6 +107,7 @@ void main() {
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
     final localeController = LocaleController();
+    await localeController.loadSavedLocale();
 
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();
@@ -124,6 +132,7 @@ void main() {
     final authController = AuthController(authRepository: mockRepo);
     await authController.checkAuthStatus();
     final localeController = LocaleController();
+    await localeController.loadSavedLocale();
 
     await tester.pumpWidget(GauPrahariApp(authController: authController, localeController: localeController));
     await tester.pumpAndSettle();

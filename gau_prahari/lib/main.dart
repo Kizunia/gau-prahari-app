@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
+import 'core/firebase/firebase_initializer.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/theme/app_theme.dart';
@@ -21,6 +22,9 @@ import 'features/voice_assistant/presentation/controllers/voice_assistant_contro
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase (real cloud backend)
+  await FirebaseInitializer.initialize();
 
   final AuthRepository authRepository = AuthRepositoryImpl();
   final authController = AuthController(authRepository: authRepository);
