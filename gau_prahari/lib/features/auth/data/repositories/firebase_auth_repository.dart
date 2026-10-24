@@ -85,6 +85,14 @@ class FirebaseAuthRepository implements AuthRepository {
     } on fb_auth.FirebaseAuthException catch (e) {
       debugPrint('Firebase Auth register error [${e.code}]: ${e.message}');
       throw Exception(_mapFirebaseAuthError(e));
+    } on FirebaseException catch (e) {
+      debugPrint('Firestore register error [${e.code}]: ${e.message}');
+      if (e.code == 'permission-denied') {
+        throw Exception(
+          'Database permission denied. Ensure Cloud Firestore security rules are deployed and Email/Password auth is enabled.',
+        );
+      }
+      throw Exception('Database error (${e.code}): ${e.message}');
     } catch (e) {
       debugPrint('Registration error: $e');
       throw Exception('Registration failed: ${e.toString()}');
@@ -120,6 +128,7 @@ class FirebaseAuthRepository implements AuthRepository {
         name = (data['name'] as String?) ?? name;
       } else {
         // Fallback: create Firestore profile if missing
+        role = cleanEmail.contains('vet') ? 'veterinarian' : 'farmer';
         await _firestore.collection('users').doc(fbUser.uid).set({
           'uid': fbUser.uid,
           'name': name,
@@ -144,6 +153,14 @@ class FirebaseAuthRepository implements AuthRepository {
     } on fb_auth.FirebaseAuthException catch (e) {
       debugPrint('Firebase Auth login error [${e.code}]: ${e.message}');
       throw Exception(_mapFirebaseAuthError(e));
+    } on FirebaseException catch (e) {
+      debugPrint('Firestore login error [${e.code}]: ${e.message}');
+      if (e.code == 'permission-denied') {
+        throw Exception(
+          'Database permission denied. Ensure Cloud Firestore security rules are deployed.',
+        );
+      }
+      throw Exception('Database error (${e.code}): ${e.message}');
     } catch (e) {
       debugPrint('Login error: $e');
       throw Exception('Sign in failed: ${e.toString()}');

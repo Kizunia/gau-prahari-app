@@ -11,34 +11,22 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function isVeterinarian() {
-      return isAuthenticated() && getUserData().role == 'veterinarian';
-    }
-
-    function isFarmer() {
-      return isAuthenticated() && getUserData().role == 'farmer';
-    }
-
     // 1. Users collection: profiles and veterinarian directory
     match /users/{uid} {
-      // Any authenticated user can read profiles (directory query role == 'veterinarian')
+      // Any authenticated user can read profiles (e.g. querying active veterinarians)
       allow read: if isAuthenticated();
 
-      // Only the user themselves can create their profile on registration
+      // Users create their profile document matching their authenticated UID
       allow create: if isOwner(uid)
                     && request.resource.data.uid == uid
                     && (request.resource.data.role == 'farmer' || request.resource.data.role == 'veterinarian');
 
       // Users may update their name/display info, but CANNOT change their role or UID
       allow update: if isOwner(uid)
-                    && request.resource.data.uid == resource.data.uid
-                    && request.resource.data.role == resource.data.role;
+                    && (!('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid)
+                    && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role);
 
-      // No client profile deletion
+      // Client profile deletion is forbidden
       allow delete: if false;
     }
 
@@ -98,15 +86,9 @@ service cloud.firestore {
                         get(/databases/$(database)/documents/reviewRequests/$(requestId)).data.veterinarianUid == request.auth.uid
                       );
 
-        // Edit and delete are strictly forbidden (append-only)
-        allow update: if false;
-        allow delete: if false;
+        // Messages are immutable and cannot be deleted or edited
+        allow update, delete: if false;
       }
-    }
-
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
