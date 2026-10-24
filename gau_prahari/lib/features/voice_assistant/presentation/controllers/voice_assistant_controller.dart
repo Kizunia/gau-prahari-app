@@ -5,6 +5,7 @@ import '../../domain/repositories/conversation_repository.dart';
 import '../../domain/services/assistant_responder.dart';
 import '../../domain/services/speech_output_service.dart';
 import '../../domain/services/speech_recognition_service.dart';
+import '../../data/services/ai_assistant_service.dart';
 
 enum VoiceAssistantStatus { idle, listening, processing, speaking, error }
 
@@ -28,6 +29,7 @@ class VoiceAssistantController extends ChangeNotifier {
 
   Map<String, dynamic>? _screenContext;
   String? _pendingAction;
+  String? _listeningLanguage;
 
   VoiceAssistantController({
     required ConversationRepository conversationRepository,
@@ -265,7 +267,7 @@ class VoiceAssistantController extends ChangeNotifier {
     await _speechRecognitionService.stopListening();
 
     if (_sessionToken == session) {
-      await _processQuery(words, languageCode: 'en', sessionToken: session);
+      await _processQuery(words, languageCode: _listeningLanguage ?? 'en', sessionToken: session);
     }
   }
 
@@ -406,9 +408,28 @@ class VoiceAssistantController extends ChangeNotifier {
       _status = VoiceAssistantStatus.speaking;
       notifyListeners();
 
+      String ttsLang = languageCode;
+      if (languageCode == 'hi') {
+        ttsLang = 'hi';
+      } else if (languageCode == 'mr') {
+        ttsLang = 'mr';
+      } else if (RegExp(r'[\u0900-\u097F]').hasMatch(replyText)) {
+        if (AiAssistantService.isMarathiQuery(cleanQuery) ||
+            replyText.contains('आहे') ||
+            replyText.contains('नाही') ||
+            replyText.contains('माहिती') ||
+            replyText.contains('दिवशी') ||
+            replyText.contains('वर्षांची') ||
+            replyText.contains('सांगा')) {
+          ttsLang = 'mr';
+        } else {
+          ttsLang = 'hi';
+        }
+      }
+
       await _speechOutputService.speak(
         replyText,
-        languageCode: languageCode,
+        languageCode: ttsLang,
         onDone: () {
           if (_sessionToken == sessionToken) {
             _status = VoiceAssistantStatus.idle;

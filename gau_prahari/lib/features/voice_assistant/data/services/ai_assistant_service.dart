@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -7,20 +7,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/config/ai_config.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/services/assistant_responder.dart';
+import '../../../collar_import/data/repositories/file_collar_data_provider.dart';
+import '../../../collar_import/domain/entities/collar_telemetry.dart';
+import '../../../cow_selection/domain/repositories/cow_repository.dart';
+import '../../../cow_selection/data/repositories/cow_repository_impl.dart';
 
 /// Concrete AI Assistant service communicating with Google Gemini API.
 ///
 /// Supports free tier Gemini models (e.g. gemini-3-flash-preview, gemini-3.5-flash),
 /// multi-turn conversation memory, screen-state contextualization,
-/// and localized actionable intent generation.
+/// dynamic herd knowledge injection, and localized direct answers.
 class AiAssistantService implements AssistantResponder {
   final http.Client _httpClient;
   final String? _apiKeyOverride;
+  final CowRepository? _cowRepository;
   static const String prefApiKey = 'gemini_api_key';
 
-  AiAssistantService({http.Client? httpClient, String? apiKey})
-      : _httpClient = httpClient ?? http.Client(),
-        _apiKeyOverride = apiKey;
+  AiAssistantService({
+    http.Client? httpClient,
+    String? apiKey,
+    CowRepository? cowRepository,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _apiKeyOverride = apiKey,
+        _cowRepository = cowRepository;
 
   /// Retrieve the active Gemini API key from SharedPreferences, falling back
   /// to the configured [AiConfig.geminiApiKey].
@@ -50,12 +59,130 @@ class AiAssistantService implements AssistantResponder {
     }
   }
 
+  /// Dynamically loads registered herd animals and their longitudinal telemetry
+  /// directly from the repositories and providers.
+  Future<String> _buildHerdContext() async {
+    try {
+      final repo = _cowRepository ?? CowRepositoryImpl();
+      final cows = await repo.getAllCows();
+      if (cows.isEmpty) return '';
+
+      final buffer = StringBuffer('\nREGISTERED ANIMALS ON THIS FARM (LIVE DATABASE):\n');
+      for (final cow in cows) {
+        final nameStr = (cow.name != null && cow.name!.trim().isNotEmpty)
+            ? 'Name: "${cow.name}", '
+            : (cow.id == 'COW-104' ? 'Name: "Ganga" (COW-104), ' : '');
+        buffer.write(
+          '- ID: ${cow.id}, ${nameStr}Breed: ${cow.breed}, Age: ${cow.ageYears} years, '
+          'Tag: ${cow.tagNumber}, Lactation: ${cow.lactationStage}, Status: ${cow.status}',
+        );
+
+        final telemetry = await _getTelemetryForCow(cow.id);
+        if (telemetry != null && telemetry.isNotEmpty) {
+          buffer.write(
+            ' | Live Telemetry (${telemetry.recordCount} days recorded): '
+            'Mean Activity: ${telemetry.meanActivity.toStringAsFixed(1)}, '
+            'Mean Skin Temp: ${telemetry.meanSkinTemperature.toStringAsFixed(1)}°C, '
+            'Mean THI: ${telemetry.meanThi.toStringAsFixed(1)}',
+          );
+        }
+        buffer.writeln();
+      }
+      return buffer.toString();
+    } catch (e) {
+      debugPrint('Error building dynamic herd context: $e');
+      return '';
+    }
+  }
+
+  /// Dynamically fetches collar telemetry records for the specified cow.
+  Future<CollarHistory?> _getTelemetryForCow(String cowId) async {
+    try {
+      final cleanId = cowId.toLowerCase().replaceAll('-', '_');
+      final provider = FileCollarDataProvider();
+      try {
+        return await provider.loadFromAsset(
+          'assets/data/collar_$cleanId.json',
+          expectedCowId: cowId,
+        );
+      } catch (_) {}
+      try {
+        return await provider.loadFromAsset(
+          'assets/data/collar_$cleanId.csv',
+          expectedCowId: cowId,
+        );
+      } catch (_) {}
+    } catch (e) {
+      debugPrint('Error loading telemetry for $cowId: $e');
+    }
+    return null;
+  }
+
+  /// Detect whether the query is in Marathi (Devanagari or transliterated Latin script).
+  static bool isMarathiQuery(String query) {
+    final lower = query.toLowerCase();
+    if (RegExp(r'[\u0900-\u097F]').hasMatch(query)) {
+      if (lower.contains('आहे') ||
+          lower.contains('नाही') ||
+          lower.contains('माहिती') ||
+          lower.contains('सांगा') ||
+          lower.contains('द्या') ||
+          lower.contains('कसे') ||
+          lower.contains('किती') ||
+          lower.contains('बद्दल') ||
+          lower.contains('मला')) {
+        return true;
+      }
+    }
+    const marathiWords = [
+      'mala', 'mahiti', 'sanga', 'baddal', 'badal', 'kiti', 'kasa', 'kase',
+      'ahe', 'nahi', 'dya', 'chi', 'cha', 'che', 'dudh', 'doodh',
+      'sarv', 'sarva', 'kuthe', 'kadhi', 'tula', 'amhi', 'aamhi', 'ji', 'sabki', 'sabhi'
+    ];
+    for (final word in marathiWords) {
+      if (RegExp(r'\b' + word + r'\b', caseSensitive: false).hasMatch(lower)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Detect whether the query is in Hindi (Devanagari or transliterated Latin script).
+  static bool isHindiQuery(String query) {
+    final lower = query.toLowerCase();
+    if (RegExp(r'[\u0900-\u097F]').hasMatch(query)) {
+      if (lower.contains('है') ||
+          lower.contains('नहीं') ||
+          lower.contains('जानकारी') ||
+          lower.contains('बताओ') ||
+          lower.contains('दीजिए') ||
+          lower.contains('कैसे') ||
+          lower.contains('कितना') ||
+          lower.contains('बारे') ||
+          lower.contains('मुझे')) {
+        return true;
+      }
+    }
+    const hindiWords = [
+      'mujhe', 'batao', 'jankari', 'bare', 'kya', 'hai', 'hain', 'nahi',
+      'kaise', 'kitna', 'do', 'dijiye', 'kripya'
+    ];
+    for (final word in hindiWords) {
+      if (RegExp(r'\b' + word + r'\b', caseSensitive: false).hasMatch(lower)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// System instructions defining Gau-Prahari cattle health domain knowledge,
-  /// conciseness, and language-adherence.
-  String _buildSystemInstruction(
-    String languageCode,
+  /// direct factual answers, conciseness, and strict language matching.
+  String _buildSystemInstruction({
+    required String query,
+    required String languageCode,
     Map<String, dynamic>? screenContext,
-  ) {
+    String herdContext = '',
+  }) {
     final langName = switch (languageCode) {
       'hi' => 'Hindi (हिंदी)',
       'mr' => 'Marathi (मराठी)',
@@ -68,24 +195,26 @@ class AiAssistantService implements AssistantResponder {
       screenContext.forEach((key, value) {
         contextSnippet += '- $key: $value\n';
       });
-      contextSnippet +=
-          'Use this current screen context when answering questions like "What should I do here?", "Which cow is selected?", or "Explain this result".';
     }
 
     return '''
-You are Gau-Prahari AI Voice Assistant, an intelligent and helpful voice companion for Indian dairy farmers and field veterinarians.
-Gau-Prahari (SIH26109, Team HealX) is an early bovine mastitis forecasting platform combining:
+You are Gau-Prahari AI Voice Assistant, an intelligent, factual, and direct voice companion for Indian dairy farmers and field veterinarians.
+Gau-Prahari (Codeapex Gauprahari) is an early bovine mastitis forecasting platform combining:
 1. Smart Neck Collar Telemetry: 14-day trends for cow activity, skin temperature, ambient temperature, humidity, and THI (Temperature-Humidity Index).
 2. Handheld Milk Tester: Real-time milk measurements including milk temperature, electrical conductivity, pH, somatic cell count (SCC), fat %, and SNF %.
 3. Machine Learning: Early risk forecasting (Healthy, Subclinical Mastitis, Clinical Mastitis).
-$contextSnippet
+$herdContext$contextSnippet
 
-Rules:
-- MUST reply in the user's selected language: $langName.
-- Keep responses short, concise, and friendly (1 to 3 sentences maximum) because answers are read aloud via Voice Text-to-Speech to the farmer.
-- Emphasize practical, actionable guidance suitable for dairy cattle management.
-- Predictions and tests in this app provide early risk forecasting, not a definitive veterinary diagnosis. Never invent measurements or certainty.
-- If the user asks to scan a cow, scan a tag, or open the QR camera (in any language, e.g. "scan cow", "गाय स्कैन करो", "गाय स्कॅन करा"), confirm nicely and end your answer with the tag: [ACTION:scan_cow].
+CRITICAL ANSWERING DIRECTIVES:
+1. ANSWER DIRECTLY: When the user asks a question, give the exact factual answer immediately. NEVER give dismissive or evasive instructions like "please select her name from the list on your screen", "tap on the scanner", or "go to another screen" unless the user explicitly asks how to navigate or how to scan.
+2. ANIMAL DETAILS: If the user asks about a specific cow (such as "Ganga", "COW-104", "COW-101", "COW-102", or any cow in the herd), immediately provide that cow's exact details: ID, Name, Breed, Age, Lactation Stage, Tag Number, Status, and recent telemetry / health records from the database.
+3. LANGUAGE AND SCRIPT RULES:
+   - If the user asks in Marathi (whether in Marathi Devanagari script OR transliterated Latin script like "Mala Ganga Ji Sabhi Mahiti De", "Ganga badal sanga", "kiti dudh dete"): You MUST reply in pure, natural Marathi (मराठी) using Devanagari script!
+   - If the user asks in Hindi (whether in Devanagari script OR Hinglish like "Ganga ke bare me batao", "Mujhe jankari do"): You MUST reply in Hindi (हिंदी) using Devanagari script!
+   - If the user asks in English: Reply in English.
+   - If the app language setting is $langName and the query language is ambiguous, use $langName.
+4. SPOKEN CONCISENESS: Keep responses between 2 to 3 sentences maximum, clear, highly factual, and friendly so it is easy to listen to when read aloud via Text-to-Speech.
+5. ACTION TRIGGER: If and only if the user specifically requests to scan a cow, open the camera, or scan a QR tag, confirm and end your answer with: [ACTION:scan_cow].
 ''';
   }
 
@@ -103,6 +232,8 @@ Rules:
         return _missingKeyMessage(languageCode);
       }
 
+      final herdContext = await _buildHerdContext();
+
       // Try primary model, fallback to secondary model if 404
       try {
         return await _callGemini(
@@ -112,6 +243,7 @@ Rules:
           model: AiConfig.defaultModel,
           conversationContext: conversationContext,
           screenContext: screenContext,
+          herdContext: herdContext,
         );
       } on _GeminiModelNotFoundException {
         debugPrint(
@@ -125,6 +257,7 @@ Rules:
             model: AiConfig.fallbackModel,
             conversationContext: conversationContext,
             screenContext: screenContext,
+            herdContext: herdContext,
           );
         } catch (fallbackErr) {
           debugPrint('Fallback model error: $fallbackErr');
@@ -143,6 +276,7 @@ Rules:
     required String model,
     List<ChatMessage>? conversationContext,
     Map<String, dynamic>? screenContext,
+    String herdContext = '',
   }) async {
     final endpoint = Uri.parse(
       'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
@@ -157,7 +291,14 @@ Rules:
     final requestBody = {
       'systemInstruction': {
         'parts': [
-          {'text': _buildSystemInstruction(languageCode, screenContext)},
+          {
+            'text': _buildSystemInstruction(
+              query: query,
+              languageCode: languageCode,
+              screenContext: screenContext,
+              herdContext: herdContext,
+            ),
+          },
         ],
       },
       'contents': contents,

@@ -76,7 +76,7 @@ class GauPrahariApp extends StatelessWidget {
                 conversationRepository: context.read<ConversationRepository>(),
                 speechRecognitionService: SpeechRecognitionServiceImpl(),
                 speechOutputService: SpeechOutputServiceImpl(),
-                responder: AiAssistantService(),
+                responder: AiAssistantService(cowRepository: CowRepositoryImpl()),
               ),
         ),
       ],

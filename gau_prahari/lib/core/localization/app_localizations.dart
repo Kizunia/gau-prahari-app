@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'default_english.dart';
 
 /// Custom localization class that loads translations from JSON asset files.
 ///
@@ -12,7 +13,7 @@ import 'package:flutter/services.dart';
 /// ```
 class AppLocalizations {
   final Locale locale;
-  late Map<String, String> _localizedStrings;
+  Map<String, String> _localizedStrings = defaultEnglish;
 
   AppLocalizations(this.locale);
 
@@ -24,7 +25,7 @@ class AppLocalizations {
     );
     if (instance != null) return instance;
     final fallback = AppLocalizations(const Locale('en'));
-    fallback._localizedStrings = {};
+    fallback._localizedStrings = defaultEnglish;
     return fallback;
   }
 
@@ -48,7 +49,7 @@ class AppLocalizations {
   /// t.translate('collarTelemetryDescription', args: {'cowId': 'COW-104'})
   /// ```
   String translate(String key, {Map<String, String>? args}) {
-    String value = _localizedStrings[key] ?? key;
+    String value = _localizedStrings[key] ?? defaultEnglish[key] ?? key;
     if (args != null) {
       args.forEach((placeholder, replacement) {
         value = value.replaceAll('{$placeholder}', replacement);

@@ -210,6 +210,7 @@ void main() {
         if (controller.messages.length >= 2) break;
         await Future.delayed(const Duration(milliseconds: 15));
       }
+      await pumpEventQueue();
 
       // Verify user message and assistant response
       expect(controller.messages.length, equals(2));
@@ -284,6 +285,7 @@ void main() {
         if (controller.status == VoiceAssistantStatus.idle) break;
         await Future.delayed(const Duration(milliseconds: 15));
       }
+      await pumpEventQueue();
 
       expect(controller.status, equals(VoiceAssistantStatus.idle));
       expect(controller.errorMessage, equals('noSpeechDetected'));

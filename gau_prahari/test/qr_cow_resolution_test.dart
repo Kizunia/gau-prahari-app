@@ -1,7 +1,12 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:gau_prahari/features/cow_selection/data/repositories/cow_repository_impl.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
   group('CowRepositoryImpl QR Code resolution', () {
     final repo = CowRepositoryImpl();
 

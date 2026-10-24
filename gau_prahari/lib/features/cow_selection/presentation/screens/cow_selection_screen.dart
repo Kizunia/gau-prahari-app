@@ -52,7 +52,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
               );
             },
           ),
-          const VoiceAssistantButton(screenName: 'cow_selection', contextData: {'screen': 'Cow Selection', 'instruction': 'User is selecting a cow or can tap to scan QR code.'}),
+          const VoiceAssistantButton(screenName: 'cow_selection', contextData: {'screen': 'Cow Selection', 'action': 'Viewing cattle herd and selecting animal for diagnostics'}),
           const LanguageSelector(),
           const SizedBox(width: 8),
           IconButton(
