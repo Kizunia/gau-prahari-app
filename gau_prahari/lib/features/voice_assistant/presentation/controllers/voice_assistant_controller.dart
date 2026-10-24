@@ -278,6 +278,7 @@ class VoiceAssistantController extends ChangeNotifier {
     required String languageCode,
     required int sessionToken,
   }) async {
+    _debugLog('processing_started');
     final cleanQuery = query.trim();
 
     if (cleanQuery.isEmpty) {
@@ -320,6 +321,7 @@ class VoiceAssistantController extends ChangeNotifier {
         userMessage,
       );
       _messages.add(savedUserMsg);
+      _debugLog('user_message_persisted');
       notifyListeners();
 
       // 3. Load only the active conversation's latest 20 messages for Gemini.
@@ -329,11 +331,13 @@ class VoiceAssistantController extends ChangeNotifier {
       );
 
       // 4. Generate a response; the responder uses no app actions in Phase 2.
+      _debugLog('responder_call_start');
       final replyText = await _responder.respond(
         query: cleanQuery,
         languageCode: languageCode,
         conversationContext: recentMessages,
       );
+      _debugLog('responder_returned reply_length=${replyText.length}');
 
       // Verify session wasn't cancelled while processing
       if (_sessionToken != sessionToken) return;
@@ -350,6 +354,7 @@ class VoiceAssistantController extends ChangeNotifier {
         assistantMessage,
       );
       _messages.add(savedAssistantMsg);
+      _debugLog('assistant_message_persisted');
       await _loadPreviousConversations();
 
       // 6. Speak response aloud
@@ -367,7 +372,7 @@ class VoiceAssistantController extends ChangeNotifier {
         },
       );
     } catch (e) {
-      debugPrint('Error processing voice query: $e');
+      _debugLog('processing_failed exception_type=${e.runtimeType}');
       if (_sessionToken == sessionToken) {
         _status = VoiceAssistantStatus.error;
         _errorMessage = 'processingError';
@@ -383,5 +388,9 @@ class VoiceAssistantController extends ChangeNotifier {
       _status = VoiceAssistantStatus.idle;
     }
     notifyListeners();
+  }
+
+  void _debugLog(String message) {
+    if (kDebugMode) debugPrint('[VoiceAssistant] $message');
   }
 }
