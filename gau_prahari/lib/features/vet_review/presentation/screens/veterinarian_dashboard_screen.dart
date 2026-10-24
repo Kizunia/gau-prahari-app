@@ -111,6 +111,9 @@ class _VeterinarianDashboardScreenState
             ? const Center(child: Text('Please sign in as a veterinarian.'))
             : Column(
                 children: [
+                  // Quick Consultation & Scheduling Action Banner
+                  _buildAppointmentQuickActions(context),
+
                   // Filter Chips
                   _buildFilterChips(),
                   const Divider(height: 1, color: AppColors.border),
@@ -256,4 +259,65 @@ class _VeterinarianDashboardScreenState
       ),
     );
   }
+  Widget _buildAppointmentQuickActions(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const VeterinarianAppointmentsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.event_note_rounded, size: 18),
+              label: const Text(
+                'Appointments',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const VeterinarianAvailabilityScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.tune_rounded, size: 18),
+              label: const Text(
+                'Set Schedule',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
