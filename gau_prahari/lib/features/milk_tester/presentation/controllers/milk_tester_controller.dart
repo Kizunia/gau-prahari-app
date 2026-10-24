@@ -25,7 +25,7 @@ class MilkTesterController extends ChangeNotifier {
   String? _errorMessage;
 
   MilkTesterController({MilkDataProvider? provider})
-      : _provider = provider ?? MockMilkTester() {
+    : _provider = provider ?? MockMilkTester() {
     _mode = _provider is HardwareMilkTester
         ? TesterMode.hardware
         : TesterMode.simulation;
@@ -73,13 +73,16 @@ class MilkTesterController extends ChangeNotifier {
       notifyListeners();
       takeMeasurement(cowId);
       _streamTimer?.cancel();
-      _streamTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) async {
+      _streamTimer = Timer.periodic(const Duration(milliseconds: 1500), (
+        _,
+      ) async {
         if (!_isContinuousStreamActive || isBusy) return;
         try {
           final result = await _provider.getMeasurement(cowId: cowId);
           _measurement = result;
           if (_provider is HardwareMilkTester) {
-            _hardwareMetadata = (_provider as HardwareMilkTester).latestMetadata;
+            _hardwareMetadata =
+                (_provider as HardwareMilkTester).latestMetadata;
           }
           notifyListeners();
         } catch (_) {

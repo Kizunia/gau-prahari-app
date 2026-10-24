@@ -3,11 +3,7 @@ import '../../domain/entities/milk_measurement.dart';
 import '../../domain/repositories/milk_data_provider.dart';
 
 /// Preset simulation profiles for the mock milk tester.
-enum MockSamplePreset {
-  healthy,
-  subclinical,
-  clinical,
-}
+enum MockSamplePreset { healthy, subclinical, clinical }
 
 /// Concrete mock implementation of [MilkDataProvider].
 /// Simulates hardware discovery, sensor sampling, and measurement delivery.

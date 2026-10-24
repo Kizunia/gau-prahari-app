@@ -54,7 +54,9 @@ class CowController extends ChangeNotifier {
       tagNumber: tagNumber.trim().isEmpty ? trimmedId : tagNumber.trim(),
       breed: breed.trim().isEmpty ? 'Indigenous' : breed.trim(),
       ageYears: ageYears,
-      lactationStage: lactationStage.trim().isEmpty ? 'Lactating' : lactationStage.trim(),
+      lactationStage: lactationStage.trim().isEmpty
+          ? 'Lactating'
+          : lactationStage.trim(),
       status: status,
       name: name?.trim().isEmpty == true ? null : name?.trim(),
     );

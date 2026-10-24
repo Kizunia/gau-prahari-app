@@ -8,6 +8,7 @@ import 'package:gau_prahari/features/cow_selection/presentation/controllers/cow_
 import 'package:gau_prahari/features/cow_selection/presentation/widgets/add_edit_cow_bottom_sheet.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../shared/widgets/language_selector.dart';
+import '../../../voice_assistant/presentation/widgets/voice_assistant_button.dart';
 import 'qr_scanner_screen.dart';
 
 class CowSelectionScreen extends StatefulWidget {
@@ -41,18 +42,25 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
         actions: [
           IconButton(
             tooltip: t.translate('scanQrCode'),
-            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.primary),
+            icon: const Icon(
+              Icons.qr_code_scanner_rounded,
+              color: AppColors.primary,
+            ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const QrScannerScreen()),
               );
             },
           ),
+          const VoiceAssistantButton(),
           const LanguageSelector(),
           const SizedBox(width: 8),
           IconButton(
             tooltip: t.translate('signOut'),
-            icon: const Icon(Icons.logout_rounded, color: AppColors.textSecondary),
+            icon: const Icon(
+              Icons.logout_rounded,
+              color: AppColors.textSecondary,
+            ),
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
@@ -66,7 +74,10 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: Text(t.translate('signOut'), style: const TextStyle(color: AppColors.error)),
+                      child: Text(
+                        t.translate('signOut'),
+                        style: const TextStyle(color: AppColors.error),
+                      ),
                     ),
                   ],
                 ),
@@ -98,7 +109,9 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const QrScannerScreen(),
+                        ),
                       );
                     },
                     child: Container(
@@ -183,7 +196,10 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(8),
@@ -235,7 +251,11 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 22),
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -355,9 +375,7 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
         borderRadius: BorderRadius.circular(14),
         onTap: () {
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CollarImportScreen(cow: cow),
-            ),
+            MaterialPageRoute(builder: (_) => CollarImportScreen(cow: cow)),
           );
         },
         child: Padding(
@@ -429,13 +447,12 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                   // Edit name button
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => showAddEditCowSheet(
-                      context,
-                      cow: cow,
-                      nameOnly: true,
-                    ),
+                    onTap: () =>
+                        showAddEditCowSheet(context, cow: cow, nameOnly: true),
                     child: Tooltip(
-                      message: hasName ? t.translate('editName') : t.translate('giveName'),
+                      message: hasName
+                          ? t.translate('editName')
+                          : t.translate('giveName'),
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
@@ -453,7 +470,11 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: AppColors.textMuted,
+                  ),
                 ],
               ),
               const Divider(height: 24, color: AppColors.border),
@@ -471,7 +492,10 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -494,4 +518,3 @@ class _CowSelectionScreenState extends State<CowSelectionScreen> {
     );
   }
 }
-

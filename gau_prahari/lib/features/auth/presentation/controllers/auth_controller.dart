@@ -3,13 +3,7 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 /// Enum representing the state of authentication.
-enum AuthStatus {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-  error,
-}
+enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 /// Controller managing authentication state and user sessions.
 class AuthController extends ChangeNotifier {
@@ -20,13 +14,14 @@ class AuthController extends ChangeNotifier {
   String? _errorMessage;
 
   AuthController({required AuthRepository authRepository})
-      : _authRepository = authRepository;
+    : _authRepository = authRepository;
 
   AuthStatus get status => _status;
   User? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _status == AuthStatus.loading;
-  bool get isAuthenticated => _status == AuthStatus.authenticated && _currentUser != null;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated && _currentUser != null;
 
   /// Check persisted session on app launch
   Future<void> checkAuthStatus() async {

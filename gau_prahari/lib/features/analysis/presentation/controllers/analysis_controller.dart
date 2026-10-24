@@ -14,7 +14,7 @@ class AnalysisController extends ChangeNotifier {
   String? _errorMessage;
 
   AnalysisController({required AnalysisRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   AnalysisResult? get result => _result;
   bool get isAnalyzing => _isAnalyzing;

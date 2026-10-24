@@ -16,9 +16,9 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     String? baseUrl,
     http.Client? httpClient,
     bool allowOfflineFallback = true,
-  })  : _baseUrl = baseUrl ?? AppConstants.defaultApiBaseUrl,
-        _httpClient = httpClient ?? http.Client(),
-        _allowOfflineFallback = allowOfflineFallback;
+  }) : _baseUrl = baseUrl ?? AppConstants.defaultApiBaseUrl,
+       _httpClient = httpClient ?? http.Client(),
+       _allowOfflineFallback = allowOfflineFallback;
 
   @override
   Future<AnalysisResult> analyzeSample(AnalysisRequest request) async {
@@ -66,18 +66,26 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     double riskScore = 0.05;
 
     if (scc > 250000) {
-      factors.add('Elevated Somatic Cell Count (${scc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} cells/mL > 250,000 threshold)');
+      factors.add(
+        'Elevated Somatic Cell Count (${scc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} cells/mL > 250,000 threshold)',
+      );
       riskScore += (scc > 500000 ? 0.55 : 0.40);
     }
     if (cond > 5.80) {
-      factors.add('Elevated Electrical Conductivity (${cond.toStringAsFixed(2)} mS/cm > 5.80 baseline)');
+      factors.add(
+        'Elevated Electrical Conductivity (${cond.toStringAsFixed(2)} mS/cm > 5.80 baseline)',
+      );
       riskScore += 0.30;
     }
     if (ph > 6.80) {
-      factors.add('Alkaline pH Shift (${ph.toStringAsFixed(2)} > 6.80 normal upper limit)');
+      factors.add(
+        'Alkaline pH Shift (${ph.toStringAsFixed(2)} > 6.80 normal upper limit)',
+      );
       riskScore += 0.15;
     } else if (ph < 6.50) {
-      factors.add('Acidic pH Shift (${ph.toStringAsFixed(2)} < 6.50 normal lower limit)');
+      factors.add(
+        'Acidic pH Shift (${ph.toStringAsFixed(2)} < 6.50 normal lower limit)',
+      );
       riskScore += 0.10;
     }
     if (temp > 37.8) {
@@ -105,7 +113,9 @@ class AnalysisRepositoryImpl implements AnalysisRepository {
     } else {
       riskLevel = 'LOW';
       prediction = 0;
-      factors.add('All physical milk and ionic parameters within normal physiological baseline');
+      factors.add(
+        'All physical milk and ionic parameters within normal physiological baseline',
+      );
       recommendedAction =
           'Animal appears healthy with normal milk biomarkers. Maintain standard milking hygiene and scheduled telemetry monitoring.';
     }

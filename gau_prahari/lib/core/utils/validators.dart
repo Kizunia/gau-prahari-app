@@ -30,10 +30,17 @@ class Validators {
     return null;
   }
 
-  static String? validateRequired(String? value, String fieldName, BuildContext context) {
+  static String? validateRequired(
+    String? value,
+    String fieldName,
+    BuildContext context,
+  ) {
     final t = AppLocalizations.of(context);
     if (value == null || value.trim().isEmpty) {
-      return t.translate('validatorFieldRequired', args: {'fieldName': fieldName});
+      return t.translate(
+        'validatorFieldRequired',
+        args: {'fieldName': fieldName},
+      );
     }
     return null;
   }

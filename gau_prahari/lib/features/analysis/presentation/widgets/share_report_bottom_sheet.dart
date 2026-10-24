@@ -79,7 +79,11 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                     color: AppColors.primaryLight,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.share_rounded, color: AppColors.primary, size: 22),
+                  child: const Icon(
+                    Icons.share_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -96,7 +100,10 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                       ),
                       Text(
                         t.translate('exportShareSubtitle'),
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -112,9 +119,18 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
               decoration: InputDecoration(
                 labelText: t.translate('vetWhatsappNumber'),
                 hintText: t.translate('vetPhoneHint'),
-                prefixIcon: const Icon(Icons.phone_rounded, size: 20, color: AppColors.primary),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(
+                  Icons.phone_rounded,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -147,7 +163,9 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${t.translate("whatsappReportPrepared")} ${uri.toString().substring(0, 45)}... (Copied to clipboard)'),
+                      content: Text(
+                        '${t.translate("whatsappReportPrepared")} ${uri.toString().substring(0, 45)}... (Copied to clipboard)',
+                      ),
                       backgroundColor: const Color(0xFF25D366),
                       duration: const Duration(seconds: 3),
                     ),
@@ -161,7 +179,9 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
             _buildActionTile(
               icon: _copied ? Icons.check_circle_rounded : Icons.copy_rounded,
               iconColor: _copied ? AppColors.success : AppColors.primary,
-              title: _copied ? t.translate('reportCopied') : t.translate('copySummaryToClipboard'),
+              title: _copied
+                  ? t.translate('reportCopied')
+                  : t.translate('copySummaryToClipboard'),
               subtitle: t.translate('copySummarySubtitle'),
               onTap: () async {
                 await _exportService.copyReportToClipboard(
@@ -260,7 +280,11 @@ class _ShareReportBottomSheetState extends State<ShareReportBottomSheet> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),

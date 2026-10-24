@@ -7,6 +7,7 @@ import '../../../cow_selection/domain/entities/cow.dart';
 import '../../../cow_selection/presentation/screens/cow_selection_screen.dart';
 import '../../../milk_tester/domain/entities/milk_measurement.dart';
 import '../../domain/entities/analysis_result.dart';
+import '../../../voice_assistant/presentation/widgets/voice_assistant_button.dart';
 import '../widgets/share_report_bottom_sheet.dart';
 
 class AnalysisResultScreen extends StatelessWidget {
@@ -49,6 +50,7 @@ class AnalysisResultScreen extends StatelessWidget {
           child: Text(t.translate('mastitisRiskAssessment')),
         ),
         actions: [
+          const VoiceAssistantButton(),
           IconButton(
             tooltip: t.translate('shareReport'),
             icon: const Icon(Icons.share_rounded, color: AppColors.primary),
@@ -67,7 +69,11 @@ class AnalysisResultScreen extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.pets_rounded, size: 14, color: AppColors.primary),
+                const Icon(
+                  Icons.pets_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   cow.displayName,
@@ -284,7 +290,11 @@ class AnalysisResultScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.insights_rounded, color: AppColors.primary, size: 20),
+              const Icon(
+                Icons.insights_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -322,7 +332,9 @@ class AnalysisResultScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: result.isHighRisk
                             ? AppColors.error
-                            : (result.isModerateRisk ? AppColors.warning : AppColors.success),
+                            : (result.isModerateRisk
+                                  ? AppColors.warning
+                                  : AppColors.success),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -354,16 +366,18 @@ class AnalysisResultScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.medical_services_rounded, color: AppColors.primary, size: 20),
+              const Icon(
+                Icons.medical_services_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -413,16 +427,43 @@ class AnalysisResultScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _buildParamRow(t.translate('milkTemperature'), '${milkMeasurement.milkTemperature.toStringAsFixed(1)} °C'),
-          _buildParamRow(t.translate('phLevel'), milkMeasurement.ph.toStringAsFixed(2)),
-          _buildParamRow(t.translate('electricalConductivity'), '${milkMeasurement.conductivity.toStringAsFixed(2)} mS/cm'),
-          _buildParamRow(t.translate('somaticCellCount'), '${milkMeasurement.scc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} cells/mL'),
-          _buildParamRow(t.translate('fatContent'), '${milkMeasurement.fat.toStringAsFixed(1)} %'),
-          _buildParamRow(t.translate('snfContent'), '${milkMeasurement.snf.toStringAsFixed(1)} %'),
+          _buildParamRow(
+            t.translate('milkTemperature'),
+            '${milkMeasurement.milkTemperature.toStringAsFixed(1)} °C',
+          ),
+          _buildParamRow(
+            t.translate('phLevel'),
+            milkMeasurement.ph.toStringAsFixed(2),
+          ),
+          _buildParamRow(
+            t.translate('electricalConductivity'),
+            '${milkMeasurement.conductivity.toStringAsFixed(2)} mS/cm',
+          ),
+          _buildParamRow(
+            t.translate('somaticCellCount'),
+            '${milkMeasurement.scc.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} cells/mL',
+          ),
+          _buildParamRow(
+            t.translate('fatContent'),
+            '${milkMeasurement.fat.toStringAsFixed(1)} %',
+          ),
+          _buildParamRow(
+            t.translate('snfContent'),
+            '${milkMeasurement.snf.toStringAsFixed(1)} %',
+          ),
           if (collarHistory != null) ...[
             const Divider(height: 20, color: AppColors.border),
-            _buildParamRow(t.translate('collarTelemetry'), t.translate('daysAttached', args: {'count': collarHistory!.recordCount.toString()})),
-            _buildParamRow(t.translate('collarMeanThi'), collarHistory!.meanThi.toStringAsFixed(1)),
+            _buildParamRow(
+              t.translate('collarTelemetry'),
+              t.translate(
+                'daysAttached',
+                args: {'count': collarHistory!.recordCount.toString()},
+              ),
+            ),
+            _buildParamRow(
+              t.translate('collarMeanThi'),
+              collarHistory!.meanThi.toStringAsFixed(1),
+            ),
           ],
         ],
       ),
@@ -438,7 +479,10 @@ class AnalysisResultScreen extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
           const SizedBox(width: 8),

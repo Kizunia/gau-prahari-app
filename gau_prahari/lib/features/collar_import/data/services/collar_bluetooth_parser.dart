@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 import '../../domain/entities/collar_telemetry.dart';
 
 /// Parsed telemetry packet from collar hardware
@@ -64,7 +64,11 @@ class CollarBluetoothParser {
       if (token.startsWith('ID:')) {
         cowId = token.substring(3).trim();
       } else if (token.startsWith('T:')) {
-        final tVal = token.substring(2).replaceAll('C', '').replaceAll('c', '').trim();
+        final tVal = token
+            .substring(2)
+            .replaceAll('C', '')
+            .replaceAll('c', '')
+            .trim();
         final parsed = double.tryParse(tVal);
         if (parsed != null) temp = parsed;
       } else if (token.startsWith('H:')) {
@@ -100,7 +104,9 @@ class CollarBluetoothParser {
     // 3. Skin Temperature:
     // Cows maintain internal ~38.6°C. Skin temperature tracks close to body temp
     // with ambient offset: Tskin ~ 35.5 + (ambient * 0.08)
-    final double skinTemp = double.parse((35.8 + (temp * 0.06)).toStringAsFixed(1));
+    final double skinTemp = double.parse(
+      (35.8 + (temp * 0.06)).toStringAsFixed(1),
+    );
 
     // 4. Animal Worn status based on MAX30105 IR reflectance
     final bool isWorn = ir > 1000;

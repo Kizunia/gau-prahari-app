@@ -52,10 +52,7 @@ class CustomTextField extends StatelessWidget {
           validator: validator,
           onFieldSubmitted: onFieldSubmitted,
           enabled: enabled,
-          style: const TextStyle(
-            fontSize: 15,
-            color: AppColors.textPrimary,
-          ),
+          style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon != null

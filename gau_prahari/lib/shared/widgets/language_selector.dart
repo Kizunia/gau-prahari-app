@@ -26,7 +26,11 @@ class LanguageSelector extends StatelessWidget {
         child: DropdownButton<String>(
           value: currentCode,
           isDense: true,
-          icon: const Icon(Icons.language_rounded, size: 18, color: AppColors.primary),
+          icon: const Icon(
+            Icons.language_rounded,
+            size: 18,
+            color: AppColors.primary,
+          ),
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,

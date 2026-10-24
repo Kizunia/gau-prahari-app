@@ -4,12 +4,7 @@ import 'package:gau_prahari/features/collar_import/data/services/collar_bluetoot
 import 'package:gau_prahari/features/collar_import/data/services/collar_native_bluetooth_service.dart';
 import 'package:gau_prahari/features/collar_import/domain/entities/collar_telemetry.dart';
 
-enum CollarConnectionState {
-  disconnected,
-  connecting,
-  streaming,
-  error,
-}
+enum CollarConnectionState { disconnected, connecting, streaming, error }
 
 /// Service managing the live hardware Bluetooth connection to the Arduino Smart Collar
 class CollarBluetoothService extends ChangeNotifier {
@@ -27,15 +22,17 @@ class CollarBluetoothService extends ChangeNotifier {
   CollarBluetoothService({
     CollarNativeBluetoothService? bluetoothService,
     CollarBluetoothParser? parser,
-  })  : _bluetoothService = bluetoothService ?? const CollarNativeBluetoothService(),
-        _parser = parser ?? const CollarBluetoothParser();
+  }) : _bluetoothService =
+           bluetoothService ?? const CollarNativeBluetoothService(),
+       _parser = parser ?? const CollarBluetoothParser();
 
   CollarConnectionState get state => _state;
   String? get connectedDeviceName => _connectedDeviceName;
   String? get connectedDeviceAddress => _connectedDeviceAddress;
   String? get errorMessage => _errorMessage;
   CollarHardwarePacket? get latestPacket => _latestPacket;
-  List<CollarTelemetry> get accumulatedHistory => List.unmodifiable(_accumulatedHistory);
+  List<CollarTelemetry> get accumulatedHistory =>
+      List.unmodifiable(_accumulatedHistory);
   bool get isStreaming => _state == CollarConnectionState.streaming;
 
   /// Retrieves list of paired BT devices (HC-05 / Collar)
@@ -44,7 +41,11 @@ class CollarBluetoothService extends ChangeNotifier {
   }
 
   /// Connects to selected Bluetooth device and starts receiving telemetry stream
-  Future<bool> connect(String name, String address, {required String expectedCowId}) async {
+  Future<bool> connect(
+    String name,
+    String address, {
+    required String expectedCowId,
+  }) async {
     _state = CollarConnectionState.connecting;
     _errorMessage = null;
     notifyListeners();
@@ -69,7 +70,9 @@ class CollarBluetoothService extends ChangeNotifier {
       _state = CollarConnectionState.error;
       var msg = e.toString().replaceAll('Exception: ', '');
       if (msg.contains('PlatformException(')) {
-        final match = RegExp(r'PlatformException\([^,]+,\s*([^,]+),').firstMatch(msg);
+        final match = RegExp(
+          r'PlatformException\([^,]+,\s*([^,]+),',
+        ).firstMatch(msg);
         if (match != null && match.group(1) != null) {
           msg = match.group(1)!.trim();
         }
@@ -104,7 +107,9 @@ class CollarBluetoothService extends ChangeNotifier {
   void _startStreamListener(String expectedCowId) {
     _pollingTimer?.cancel();
     // Periodically read stream from native platform channel
-    _pollingTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) async {
+    _pollingTimer = Timer.periodic(const Duration(milliseconds: 1200), (
+      _,
+    ) async {
       if (_state != CollarConnectionState.streaming) return;
       try {
         final line = await _bluetoothService.readPacket();
@@ -138,7 +143,8 @@ class CollarBluetoothService extends ChangeNotifier {
       final accY = (count % 3 == 0) ? 0.8 : 0.4;
       final ir = 42000 + (count % 5) * 500;
 
-      final simLine = 'ID:$expectedCowId|T:${temp.toStringAsFixed(1)}C|H:${hum.toStringAsFixed(1)}%|Acc[$accX,$accY]|IR:$ir';
+      final simLine =
+          'ID:$expectedCowId|T:${temp.toStringAsFixed(1)}C|H:${hum.toStringAsFixed(1)}%|Acc[$accX,$accY]|IR:$ir';
       ingestLine(simLine, expectedCowId: expectedCowId);
     });
   }
@@ -146,20 +152,25 @@ class CollarBluetoothService extends ChangeNotifier {
   /// Creates a CollarHistory entity out of accumulated hardware readings
   CollarHistory toCollarHistory({required String cowId}) {
     if (_accumulatedHistory.isNotEmpty) {
-      return CollarHistory(cowId: cowId, records: List.from(_accumulatedHistory));
+      return CollarHistory(
+        cowId: cowId,
+        records: List.from(_accumulatedHistory),
+      );
     }
     // If fewer than 1 reading, generate current live point
-    final fallbackPacket = _latestPacket ?? const CollarHardwarePacket(
-      ambientTemp: 32.0,
-      skinTemp: 37.8,
-      humidity: 65.0,
-      thi: 80.5,
-      activityIndex: 62.0,
-      accX: 0.1,
-      accY: 0.8,
-      irValue: 45000,
-      isWorn: true,
-    );
+    final fallbackPacket =
+        _latestPacket ??
+        const CollarHardwarePacket(
+          ambientTemp: 32.0,
+          skinTemp: 37.8,
+          humidity: 65.0,
+          thi: 80.5,
+          activityIndex: 62.0,
+          accX: 0.1,
+          accY: 0.8,
+          irValue: 45000,
+          isWorn: true,
+        );
     return CollarHistory(
       cowId: cowId,
       records: [fallbackPacket.toCollarTelemetry()],

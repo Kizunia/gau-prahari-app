@@ -12,7 +12,7 @@ class CollarImportController extends ChangeNotifier {
   String? _sourceName;
 
   CollarImportController({required CollarDataProvider provider})
-      : _provider = provider;
+    : _provider = provider;
 
   CollarHistory? get history => _history;
   bool get isLoading => _isLoading;
