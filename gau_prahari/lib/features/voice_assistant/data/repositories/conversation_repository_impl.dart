@@ -175,6 +175,57 @@ class ConversationRepositoryImpl implements ConversationRepository {
     return toSave;
   }
 
+  List<ChatMessage> _deduplicate(List<ChatMessage> rawMessages, {Database? db}) {
+    if (rawMessages.length <= 1) return rawMessages;
+
+    final deduplicated = <ChatMessage>[];
+    final toDeleteIds = <String>[];
+
+    for (int i = 0; i < rawMessages.length; i++) {
+      final current = rawMessages[i];
+      if (deduplicated.isEmpty) {
+        deduplicated.add(current);
+        continue;
+      }
+
+      final prev = deduplicated.last;
+
+      // Duplicate user message check: exact same content and role within 10 seconds
+      if (current.role == 'user' &&
+          prev.role == 'user' &&
+          current.content.trim().toLowerCase() ==
+              prev.content.trim().toLowerCase() &&
+          (current.createdAt - prev.createdAt).abs() < 10000) {
+        if (current.id.isNotEmpty) toDeleteIds.add(current.id);
+        continue;
+      }
+
+      // Duplicate assistant message check: consecutive assistant messages within 10 seconds
+      if (current.role == 'assistant' &&
+          prev.role == 'assistant' &&
+          (current.createdAt - prev.createdAt).abs() < 10000) {
+        if (current.id.isNotEmpty) toDeleteIds.add(current.id);
+        continue;
+      }
+
+      deduplicated.add(current);
+    }
+
+    if (db != null && toDeleteIds.isNotEmpty) {
+      for (final id in toDeleteIds) {
+        db
+            .delete(
+              ConversationDatabase.tableMessages,
+              where: 'id = ?',
+              whereArgs: [id],
+            )
+            .catchError((_) => 0);
+      }
+    }
+
+    return deduplicated;
+  }
+
   @override
   Future<List<ChatMessage>> getMessages(String conversationId) async {
     final db = await _dbHelper.database;
@@ -185,7 +236,8 @@ class ConversationRepositoryImpl implements ConversationRepository {
       orderBy: 'created_at ASC',
     );
 
-    return maps.map((m) => ChatMessage.fromMap(m)).toList();
+    final raw = maps.map((m) => ChatMessage.fromMap(m)).toList();
+    return _deduplicate(raw, db: db);
   }
 
   @override
@@ -203,7 +255,8 @@ class ConversationRepositoryImpl implements ConversationRepository {
     );
 
     // Return in chronological order (oldest to newest within the window)
-    return maps.map((m) => ChatMessage.fromMap(m)).toList().reversed.toList();
+    final raw = maps.map((m) => ChatMessage.fromMap(m)).toList().reversed.toList();
+    return _deduplicate(raw, db: db);
   }
 
   @override

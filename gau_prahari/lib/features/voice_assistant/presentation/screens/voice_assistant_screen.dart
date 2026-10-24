@@ -72,7 +72,13 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
     final aiService = AiAssistantService();
     final currentKey = await aiService.getApiKey();
     final controller = TextEditingController(text: currentKey);
-    bool obscure = true;
+    if (currentKey.isNotEmpty) {
+      controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: currentKey.length,
+      );
+    }
+    bool obscure = false;
 
     if (!context.mounted) return;
 
@@ -111,16 +117,31 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                 TextField(
                   controller: controller,
                   obscureText: obscure,
+                  maxLines: 1,
                   decoration: InputDecoration(
                     labelText: t.translate('apiKeySettings'),
                     hintText: t.translate('apiKeyHint'),
                     border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscure ? Icons.visibility_off : Icons.visibility,
-                        size: 20,
-                      ),
-                      onPressed: () => setState(() => obscure = !obscure),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (controller.text.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 20),
+                            onPressed: () {
+                              setState(() {
+                                controller.clear();
+                              });
+                            },
+                          ),
+                        IconButton(
+                          icon: Icon(
+                            obscure ? Icons.visibility_off : Icons.visibility,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(() => obscure = !obscure),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -154,8 +175,8 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
-                final key = controller.text.trim();
-                await AiAssistantService.setApiKey(key.isEmpty ? null : key);
+                final key = controller.text;
+                await AiAssistantService.setApiKey(key);
                 if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -846,9 +867,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
                     ),
                   ),
                   onSubmitted: (value) {
-                    if (value.trim().isNotEmpty) {
-                      controller.submitQuery(value, languageCode: langCode);
+                    if (value.trim().isNotEmpty && !controller.isProcessing) {
                       _textInputController.clear();
+                      controller.submitQuery(value, languageCode: langCode);
                     }
                   },
                 ),
@@ -856,13 +877,15 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
               const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.send_rounded, color: AppColors.primary),
-                onPressed: () {
-                  final text = _textInputController.text.trim();
-                  if (text.isNotEmpty) {
-                    controller.submitQuery(text, languageCode: langCode);
-                    _textInputController.clear();
-                  }
-                },
+                onPressed: controller.isProcessing
+                    ? null
+                    : () {
+                        final text = _textInputController.text.trim();
+                        if (text.isNotEmpty) {
+                          _textInputController.clear();
+                          controller.submitQuery(text, languageCode: langCode);
+                        }
+                      },
               ),
             ],
           ),
@@ -870,7 +893,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen>
 
           // Central prominent Microphone button
           GestureDetector(
-            onTap: () => controller.toggleListening(languageCode: langCode),
+            onTap: controller.isProcessing
+                ? null
+                : () => controller.toggleListening(languageCode: langCode),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               width: 68,

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -31,31 +31,71 @@ class AiAssistantService implements AssistantResponder {
         _apiKeyOverride = apiKey,
         _cowRepository = cowRepository;
 
+  /// Cleans and sanitizes user-entered API keys by stripping quotes,
+  /// semicolons, placeholder artifacts, prefixes, and whitespace.
+  static String sanitizeApiKey(String? raw) {
+    if (raw == null) return '';
+    var key = raw.trim();
+    // Strip trailing semicolon
+    if (key.endsWith(';')) {
+      key = key.substring(0, key.length - 1).trim();
+    }
+    // Strip surrounding quotes
+    if ((key.startsWith('"') && key.endsWith('"')) ||
+        (key.startsWith("'") && key.endsWith("'"))) {
+      key = key.substring(1, key.length - 1).trim();
+    }
+    // Strip prefixes like "gemini_api_key = ", "key: ", "api_key="
+    final prefixRegex = RegExp(
+      r'^(?:static\s+const\s+String\s+)?(?:gemini_?api_?key|api_?key|key)\s*[:=]\s*',
+      caseSensitive: false,
+    );
+    key = key.replaceAll(prefixRegex, '').trim();
+    // Strip surrounding quotes again if present inside prefix
+    if ((key.startsWith('"') && key.endsWith('"')) ||
+        (key.startsWith("'") && key.endsWith("'"))) {
+      key = key.substring(1, key.length - 1).trim();
+    }
+    // Strip placeholder artifact if concatenated
+    if (key.contains('YOUR_GEMINI_API_KEY_HERE')) {
+      key = key.replaceAll('YOUR_GEMINI_API_KEY_HERE', '').trim();
+    }
+    return key;
+  }
+
   /// Retrieve the active Gemini API key from SharedPreferences, falling back
   /// to the configured [AiConfig.geminiApiKey].
   Future<String> getApiKey() async {
     if (_apiKeyOverride != null) {
-      return _apiKeyOverride.trim();
+      return sanitizeApiKey(_apiKeyOverride);
     }
     try {
       final prefs = await SharedPreferences.getInstance();
-      final storedKey = prefs.getString(prefApiKey)?.trim();
-      if (storedKey != null && storedKey.isNotEmpty) {
-        return storedKey;
+      final storedKey = prefs.getString(prefApiKey);
+      if (storedKey != null) {
+        final sanitized = sanitizeApiKey(storedKey);
+        if (sanitized.isNotEmpty) {
+          return sanitized;
+        }
       }
     } catch (e) {
       debugPrint('AiAssistantService getApiKey prefs error: $e');
     }
-    return AiConfig.geminiApiKey.trim();
+    return sanitizeApiKey(AiConfig.geminiApiKey);
   }
 
   /// Store or clear the API key dynamically in SharedPreferences.
   static Future<void> setApiKey(String? key) async {
     final prefs = await SharedPreferences.getInstance();
-    if (key == null || key.trim().isEmpty) {
+    if (key == null) {
+      await prefs.remove(prefApiKey);
+      return;
+    }
+    final sanitized = sanitizeApiKey(key);
+    if (sanitized.isEmpty) {
       await prefs.remove(prefApiKey);
     } else {
-      await prefs.setString(prefApiKey, key.trim());
+      await prefs.setString(prefApiKey, sanitized);
     }
   }
 
@@ -343,13 +383,25 @@ CRITICAL ANSWERING DIRECTIVES:
       return _quotaExceededMessage(languageCode);
     }
 
-    if (response.statusCode == 400 ||
-        response.statusCode == 401 ||
-        response.statusCode == 403) {
+    if (response.statusCode == 401 || response.statusCode == 403) {
       debugPrint(
-        'Gemini API Auth/Payload Error ${response.statusCode}: ${response.body}',
+        'Gemini API Auth Error ${response.statusCode}: ${response.body}',
       );
       return _invalidKeyMessage(languageCode);
+    }
+
+    if (response.statusCode == 400) {
+      debugPrint(
+        'Gemini API 400 Error: ${response.body}',
+      );
+      final body = response.body.toLowerCase();
+      if (body.contains('api key') ||
+          body.contains('api_key') ||
+          body.contains('key not valid') ||
+          body.contains('key expired')) {
+        return _invalidKeyMessage(languageCode);
+      }
+      return _generalErrorMessage(languageCode);
     }
 
     debugPrint('Gemini API HTTP Error ${response.statusCode}: ${response.body}');

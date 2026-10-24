@@ -348,6 +348,106 @@ void main() {
       expect(userMsg.screenName, equals('collar_import'));
       expect(assistantMsg.screenName, equals('collar_import'));
     });
+
+    test('Simultaneous onResult isFinal and stopListening does not produce duplicate messages', () async {
+      await controller.init(currentOwnerId: 'user_1');
+      await controller.startListening(languageCode: 'en');
+
+      // First partial words
+      fakeRecognition.simulateSpeech('now tell me what is the master artist', isFinal: false);
+      expect(controller.currentTranscript, equals('now tell me what is the master artist'));
+
+      // Now simulate final result arriving and stopListening called concurrently
+      fakeRecognition.simulateSpeech('now tell me what is the master artist', isFinal: true);
+      await controller.stopListening();
+
+      // Wait for any async processing
+      for (int i = 0; i < 50; i++) {
+        if (controller.messages.length >= 2) break;
+        await Future.delayed(const Duration(milliseconds: 15));
+      }
+      await pumpEventQueue();
+
+      // Ensure exactly 1 user message and 1 assistant message exist
+      expect(controller.messages.length, equals(2));
+      expect(controller.messages.where((m) => m.role == 'user').length, equals(1));
+      expect(controller.messages.where((m) => m.role == 'assistant').length, equals(1));
+
+      final dbMessages = await repository.getMessages(controller.activeConversation!.id);
+      expect(dbMessages.length, equals(2));
+      expect(dbMessages.where((m) => m.role == 'user').length, equals(1));
+      expect(dbMessages.where((m) => m.role == 'assistant').length, equals(1));
+    });
+
+    test('Rapid consecutive identical queries are debounced to avoid duplicates', () async {
+      await controller.init(currentOwnerId: 'user_1');
+
+      // Rapidly fire two submitQuery calls
+      controller.submitQuery('what is mastitis', languageCode: 'en');
+      controller.submitQuery('what is mastitis', languageCode: 'en');
+
+      for (int i = 0; i < 50; i++) {
+        if (controller.messages.length >= 2) break;
+        await Future.delayed(const Duration(milliseconds: 15));
+      }
+      await pumpEventQueue();
+
+      // Only one user message and one assistant message created
+      expect(controller.messages.length, equals(2));
+      expect(controller.messages.where((m) => m.role == 'user').length, equals(1));
+      expect(controller.messages.where((m) => m.role == 'assistant').length, equals(1));
+    });
+
+    test('getMessages automatically heals pre-existing duplicate messages in database', () async {
+      final conv = await repository.createConversation(
+        id: 'dup_conv',
+        ownerId: 'user_1',
+        title: 'Duplicate Test',
+      );
+
+      final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+      // Insert duplicate user messages
+      await repository.addMessage(ChatMessage(
+        id: 'msg_u1',
+        conversationId: conv.id,
+        role: 'user',
+        content: 'now tell me what is the master artist',
+        createdAt: now,
+      ));
+      await repository.addMessage(ChatMessage(
+        id: 'msg_u2',
+        conversationId: conv.id,
+        role: 'user',
+        content: 'now tell me what is the master artist',
+        createdAt: now + 50,
+      ));
+
+      // Insert two assistant replies
+      await repository.addMessage(ChatMessage(
+        id: 'msg_a1',
+        conversationId: conv.id,
+        role: 'assistant',
+        content: 'Mastitis is an udder infection...',
+        createdAt: now + 1200,
+      ));
+      await repository.addMessage(ChatMessage(
+        id: 'msg_a2',
+        conversationId: conv.id,
+        role: 'assistant',
+        content: 'Mastitis is a painful inflammation...',
+        createdAt: now + 1250,
+      ));
+
+      // Fetch messages: duplicates should be filtered and cleaned from database
+      final cleanedMessages = await repository.getMessages(conv.id);
+      expect(cleanedMessages.length, equals(2));
+      expect(cleanedMessages[0].id, equals('msg_u1'));
+      expect(cleanedMessages[1].id, equals('msg_a1'));
+
+      // Verify second fetch from SQLite has permanently removed duplicates
+      final refetched = await repository.getMessages(conv.id);
+      expect(refetched.length, equals(2));
+    });
   });
 }
 

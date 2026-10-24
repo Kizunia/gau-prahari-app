@@ -307,5 +307,20 @@ void main() {
 
       expect(reply, contains('took too long to respond'));
     });
+
+    test('sanitizeApiKey strips quotes, semicolons, prefixes, placeholders, and whitespace', () {
+      expect(
+        AiAssistantService.sanitizeApiKey('  "MOCK_GEMINI_KEY_1234567890_abcdefghij"  '),
+        'MOCK_GEMINI_KEY_1234567890_abcdefghij',
+      );
+      expect(
+        AiAssistantService.sanitizeApiKey("geminiApiKey = 'MOCK_GEMINI_KEY_1234567890_abcdefghij';"),
+        'MOCK_GEMINI_KEY_1234567890_abcdefghij',
+      );
+      expect(
+        AiAssistantService.sanitizeApiKey('YOUR_GEMINI_API_KEY_HEREMOCK_GEMINI_KEY_1234567890_abcdefghij'),
+        'MOCK_GEMINI_KEY_1234567890_abcdefghij',
+      );
+    });
   });
 }

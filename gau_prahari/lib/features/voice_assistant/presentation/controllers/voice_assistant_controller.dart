@@ -27,6 +27,11 @@ class VoiceAssistantController extends ChangeNotifier {
   bool _isInitialized = false;
   int _sessionToken = 0;
 
+  // Processing guards to prevent duplicate invocations and races
+  int? _activeProcessingSession;
+  String? _lastProcessedQuery;
+  int? _lastProcessedTimestamp;
+
   Map<String, dynamic>? _screenContext;
   String? _pendingAction;
   String? _listeningLanguage;
@@ -54,7 +59,9 @@ class VoiceAssistantController extends ChangeNotifier {
   String? get pendingAction => _pendingAction;
 
   bool get isListening => _status == VoiceAssistantStatus.listening;
-  bool get isProcessing => _status == VoiceAssistantStatus.processing;
+  bool get isProcessing =>
+      _status == VoiceAssistantStatus.processing ||
+      _activeProcessingSession != null;
   bool get isSpeaking => _status == VoiceAssistantStatus.speaking;
   bool get isIdle => _status == VoiceAssistantStatus.idle;
 
@@ -134,6 +141,8 @@ class VoiceAssistantController extends ChangeNotifier {
     _currentTranscript = null;
     _errorMessage = null;
     _pendingAction = null;
+    _lastProcessedQuery = null;
+    _lastProcessedTimestamp = null;
     _status = VoiceAssistantStatus.idle;
     notifyListeners();
   }
@@ -161,6 +170,8 @@ class VoiceAssistantController extends ChangeNotifier {
     _currentTranscript = null;
     _errorMessage = null;
     _pendingAction = null;
+    _lastProcessedQuery = null;
+    _lastProcessedTimestamp = null;
     _status = VoiceAssistantStatus.idle;
     notifyListeners();
   }
@@ -182,6 +193,9 @@ class VoiceAssistantController extends ChangeNotifier {
 
   /// Toggle or start listening for voice input.
   Future<void> toggleListening({required String languageCode}) async {
+    if (isProcessing) {
+      return;
+    }
     if (_status == VoiceAssistantStatus.listening) {
       await stopListening();
     } else if (_status == VoiceAssistantStatus.speaking) {
@@ -194,8 +208,7 @@ class VoiceAssistantController extends ChangeNotifier {
 
   /// Start listening for voice input in [languageCode].
   Future<void> startListening({required String languageCode}) async {
-    if (_status == VoiceAssistantStatus.listening ||
-        _status == VoiceAssistantStatus.processing) {
+    if (_status == VoiceAssistantStatus.listening || isProcessing) {
       return;
     }
 
@@ -203,6 +216,7 @@ class VoiceAssistantController extends ChangeNotifier {
     await _speechOutputService.stop();
 
     final currentSession = ++_sessionToken;
+    _listeningLanguage = languageCode;
     _errorMessage = null;
     _currentTranscript = '';
     _status = VoiceAssistantStatus.listening;
@@ -231,10 +245,30 @@ class VoiceAssistantController extends ChangeNotifier {
           notifyListeners();
 
           if (isFinal) {
+            final cleanWords = words.trim();
+            _currentTranscript = null;
+            _speechRecognitionService.stopListening().catchError((_) {});
+
+            if (cleanWords.isEmpty) {
+              _status = VoiceAssistantStatus.idle;
+              _errorMessage = 'noSpeechDetected';
+              notifyListeners();
+              return;
+            }
+
+            if (isProcessing) {
+              debugPrint('Ignoring isFinal: already processing.');
+              return;
+            }
+
+            _status = VoiceAssistantStatus.processing;
+
+            final querySession = ++_sessionToken;
+            _activeProcessingSession = querySession;
             _processQuery(
-              words,
+              cleanWords,
               languageCode: languageCode,
-              sessionToken: currentSession,
+              sessionToken: querySession,
             );
           }
         },
@@ -262,20 +296,48 @@ class VoiceAssistantController extends ChangeNotifier {
   Future<void> stopListening() async {
     if (_status != VoiceAssistantStatus.listening) return;
 
-    final session = _sessionToken;
-    final words = _currentTranscript ?? '';
-    await _speechRecognitionService.stopListening();
+    final query = (_currentTranscript ?? '').trim();
+    _currentTranscript = null;
+    _status = VoiceAssistantStatus.idle;
 
-    if (_sessionToken == session) {
-      await _processQuery(words, languageCode: _listeningLanguage ?? 'en', sessionToken: session);
+    if (query.isEmpty) {
+      _errorMessage = 'noSpeechDetected';
+      notifyListeners();
+      return;
     }
+
+    if (isProcessing) {
+      debugPrint('Ignoring stopListening query: already processing.');
+      return;
+    }
+
+    _status = VoiceAssistantStatus.processing;
+
+    try {
+      await _speechRecognitionService.stopListening();
+    } catch (e) {
+      debugPrint('Error stopping speech recognition: $e');
+    }
+
+    final querySession = ++_sessionToken;
+    _activeProcessingSession = querySession;
+
+    await _processQuery(
+      query,
+      languageCode: _listeningLanguage ?? 'en',
+      sessionToken: querySession,
+    );
   }
 
   /// Cancel listening and discard partial text.
   Future<void> cancelListening() async {
     _sessionToken++;
-    if (_speechRecognitionService.isListening) {
-      await _speechRecognitionService.cancelListening();
+    try {
+      if (_speechRecognitionService.isListening) {
+        await _speechRecognitionService.cancelListening();
+      }
+    } catch (e) {
+      debugPrint('Error canceling speech recognition: $e');
     }
     _currentTranscript = null;
     _status = VoiceAssistantStatus.idle;
@@ -294,11 +356,37 @@ class VoiceAssistantController extends ChangeNotifier {
 
   /// Submit a query directly (supports programmatic calls or touch input).
   Future<void> submitQuery(String query, {required String languageCode}) async {
-    if (query.trim().isEmpty) return;
+    final cleanQuery = query.trim();
+    if (cleanQuery.isEmpty) return;
+    if (isProcessing) {
+      debugPrint('Ignoring submitQuery: query is already being processed.');
+      return;
+    }
+
+    // Debounce rapid duplicate query submissions
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (_lastProcessedQuery == cleanQuery &&
+        _lastProcessedTimestamp != null &&
+        (nowMs - _lastProcessedTimestamp!) < 2000) {
+      debugPrint('Discarding duplicate query in rapid succession: $cleanQuery');
+      return;
+    }
+
+    _status = VoiceAssistantStatus.processing;
+    _lastProcessedQuery = cleanQuery;
+    _lastProcessedTimestamp = nowMs;
+    _listeningLanguage = languageCode;
+
     await stopSpeaking();
+    if (_status == VoiceAssistantStatus.listening) {
+      await cancelListening();
+    }
+
     final currentSession = ++_sessionToken;
+    _activeProcessingSession = currentSession;
+
     await _processQuery(
-      query,
+      cleanQuery,
       languageCode: languageCode,
       sessionToken: currentSession,
     );
@@ -338,6 +426,16 @@ class VoiceAssistantController extends ChangeNotifier {
       }
       return;
     }
+
+    if (_activeProcessingSession != null &&
+        _activeProcessingSession != sessionToken) {
+      debugPrint('Ignoring duplicate query processing: already processing.');
+      return;
+    }
+
+    _activeProcessingSession = sessionToken;
+    _lastProcessedQuery = cleanQuery;
+    _lastProcessedTimestamp = DateTime.now().millisecondsSinceEpoch;
 
     _status = VoiceAssistantStatus.processing;
     _currentTranscript = null;
@@ -443,6 +541,10 @@ class VoiceAssistantController extends ChangeNotifier {
         _status = VoiceAssistantStatus.error;
         _errorMessage = 'processingError';
         notifyListeners();
+      }
+    } finally {
+      if (_activeProcessingSession == sessionToken) {
+        _activeProcessingSession = null;
       }
     }
   }
