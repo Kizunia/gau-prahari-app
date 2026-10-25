@@ -76,9 +76,24 @@ class AppointmentSlot {
   }
 
   static DateTime _parseDate(dynamic raw) {
-    if (raw is Timestamp) return raw.toDate();
-    if (raw is DateTime) return raw;
-    if (raw is String) return DateTime.tryParse(raw) ?? DateTime.now();
+    if (raw == null) return DateTime.now();
+    if (raw is Timestamp) return raw.toDate().toLocal();
+    if (raw is DateTime) return raw.toLocal();
+    if (raw is Map) {
+      final seconds = raw['seconds'] ?? raw['_seconds'];
+      if (seconds is int) {
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000).toLocal();
+      }
+      if (seconds is num) {
+        return DateTime.fromMillisecondsSinceEpoch((seconds * 1000).toInt()).toLocal();
+      }
+    }
+    if (raw is int) {
+      return DateTime.fromMillisecondsSinceEpoch(raw).toLocal();
+    }
+    if (raw is String) {
+      return (DateTime.tryParse(raw) ?? DateTime.now()).toLocal();
+    }
     return DateTime.now();
   }
 

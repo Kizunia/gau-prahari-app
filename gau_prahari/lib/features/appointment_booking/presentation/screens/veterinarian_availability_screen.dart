@@ -27,11 +27,18 @@ class _VeterinarianAvailabilityScreenState
   bool _isSaving = false;
   bool _isPublishing = false;
   DateTime _inspectDate = DateTime.now();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadSchedule();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSchedule() async {
@@ -101,6 +108,16 @@ class _VeterinarianAvailabilityScreenState
             backgroundColor: AppColors.success,
           ),
         );
+        // Scroll down to the slot inspector so the user immediately sees their published slots
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOut,
+            );
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -183,6 +200,7 @@ class _VeterinarianAvailabilityScreenState
                 ),
               )
             : ListView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
                   // 1. Info & Overview Banner
@@ -390,6 +408,7 @@ class _VeterinarianAvailabilityScreenState
         }
 
         if (snapshot.hasError) {
+          debugPrint('🔴 [VetAvailability] Error loading slots: ${snapshot.error}');
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -414,6 +433,8 @@ class _VeterinarianAvailabilityScreenState
 
         final slots = snapshot.data ?? [];
         if (slots.isEmpty) {
+          const names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+          final dayName = names[_inspectDate.weekday - 1];
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -421,26 +442,56 @@ class _VeterinarianAvailabilityScreenState
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'No slots published on this date yet. Tap "Publish Next 14 Days Slots" above.',
+                'No slots published on $dayName, ${_inspectDate.day}/${_inspectDate.month} yet.\nIf this day is disabled in your hours above, toggle it ON and tap "Publish Next 14 Days Slots".',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
               ),
             ),
           );
         }
 
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: slots.map((slot) {
-            return TimeSlotChip(
-              slot: slot,
-              showStatus: true,
-              onTap: () => _toggleSlotBlock(slot),
-            );
-          }).toList(),
+        final availableCount = slots.where((s) => s.isAvailable).length;
+        final blockedCount = slots.where((s) => s.isBlocked).length;
+        final bookedCount = slots.where((s) => s.isBooked).length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${slots.length} total slots ($availableCount available • $blockedCount blocked • $bookedCount booked)',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: slots.map((slot) {
+                return TimeSlotChip(
+                  slot: slot,
+                  showStatus: true,
+                  onTap: () => _toggleSlotBlock(slot),
+                );
+              }).toList(),
+            ),
+          ],
         );
       },
     );

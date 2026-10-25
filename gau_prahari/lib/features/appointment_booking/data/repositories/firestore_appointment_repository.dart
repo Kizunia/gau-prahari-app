@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../vet_review/domain/entities/vet_profile.dart';
 import '../../domain/entities/appointment.dart';
@@ -137,6 +138,7 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
 
   @override
   Future<void> saveVeterinarianSchedule(VeterinarianSchedule schedule) async {
+    debugPrint('[AppointmentBooking] Saving schedule for vet: ${schedule.veterinarianUid} (isDemo=$isDemo)');
     if (isDemo) {
       _demoSchedules[schedule.veterinarianUid] = schedule;
       return;
@@ -145,11 +147,16 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     final data = schedule.toMap(useTimestamps: true);
     data['updatedAt'] = FieldValue.serverTimestamp();
     await _schedulesCol.doc(schedule.veterinarianUid).set(data, SetOptions(merge: true));
+    debugPrint('[AppointmentBooking] Schedule saved successfully in Firestore for: ${schedule.veterinarianUid}');
   }
 
   @override
   Future<int> publishSlots(String veterinarianUid, List<AppointmentSlot> slots) async {
-    if (slots.isEmpty) return 0;
+    if (slots.isEmpty) {
+      debugPrint('[AppointmentBooking] publishSlots called with empty slots list for $veterinarianUid');
+      return 0;
+    }
+    debugPrint('[AppointmentBooking] Publishing ${slots.length} slots for vet: $veterinarianUid (isDemo=$isDemo)');
 
     if (isDemo) {
       int count = 0;
@@ -161,6 +168,7 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
           count++;
         }
       }
+      debugPrint('[AppointmentBooking] Published $count slots in local demo storage');
       return count;
     }
 
@@ -177,7 +185,6 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
 
       for (final slot in chunk) {
         final docRef = _slotsCol.doc(slot.id);
-        // Write slot data without forcing composite indexing
         final data = slot.toMap(useTimestamps: true);
         data['createdAt'] = FieldValue.serverTimestamp();
         data['updatedAt'] = FieldValue.serverTimestamp();
@@ -187,8 +194,10 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
       }
 
       await batch.commit();
+      debugPrint('[AppointmentBooking] Committed batch chunk (${chunk.length} slots). Total published: $publishedCount');
     }
 
+    debugPrint('[AppointmentBooking] Successfully published total $publishedCount slots to Cloud Firestore');
     return publishedCount;
   }
 
@@ -197,6 +206,7 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     required String slotId,
     required SlotStatus status,
   }) async {
+    debugPrint('[AppointmentBooking] Updating slot $slotId status to ${status.key} (isDemo=$isDemo)');
     if (isDemo) {
       final slot = _demoSlots[slotId];
       if (slot != null) {
@@ -216,15 +226,21 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     required String veterinarianUid,
     required DateTime day,
   }) {
+    final localDay = day.toLocal();
+    debugPrint('[AppointmentBooking] streamSlotsForDay: vet=$veterinarianUid, day=${localDay.year}-${localDay.month}-${localDay.day} (isDemo=$isDemo)');
+
     if (isDemo) {
       final slots = _demoSlots.values
-          .where((s) =>
-              s.veterinarianUid == veterinarianUid &&
-              s.startAt.year == day.year &&
-              s.startAt.month == day.month &&
-              s.startAt.day == day.day)
+          .where((s) {
+            final sDate = s.startAt.toLocal();
+            return s.veterinarianUid == veterinarianUid &&
+                sDate.year == localDay.year &&
+                sDate.month == localDay.month &&
+                sDate.day == localDay.day;
+          })
           .toList()
         ..sort((a, b) => a.startAt.compareTo(b.startAt));
+      debugPrint('[AppointmentBooking] Demo streamSlotsForDay returning ${slots.length} slots for ${localDay.day}/${localDay.month}');
       return Stream.value(slots);
     }
 
@@ -233,16 +249,29 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     return _slotsCol
         .where('veterinarianUid', isEqualTo: veterinarianUid)
         .snapshots()
+        .handleError((error, stackTrace) {
+          debugPrint('🔴 [AppointmentBooking] streamSlotsForDay Firestore error: $error');
+          debugPrint(stackTrace.toString());
+        })
         .map((snapshot) {
-          final list = snapshot.docs
-              .map((doc) => AppointmentSlot.fromFirestore(doc.data(), doc.id))
-              .where((s) =>
-                  s.startAt.year == day.year &&
-                  s.startAt.month == day.month &&
-                  s.startAt.day == day.day)
-              .toList()
-            ..sort((a, b) => a.startAt.compareTo(b.startAt));
-          return list;
+          final allSlots = snapshot.docs.map((doc) {
+            try {
+              return AppointmentSlot.fromFirestore(doc.data(), doc.id);
+            } catch (e) {
+              debugPrint('🔴 [AppointmentBooking] Failed to deserialize slot ${doc.id}: $e');
+              return null;
+            }
+          }).whereType<AppointmentSlot>().toList();
+
+          final daySlots = allSlots.where((s) {
+            final sDate = s.startAt.toLocal();
+            return sDate.year == localDay.year &&
+                sDate.month == localDay.month &&
+                sDate.day == localDay.day;
+          }).toList()..sort((a, b) => a.startAt.compareTo(b.startAt));
+
+          debugPrint('[AppointmentBooking] Stream updated: Firestore has ${snapshot.docs.length} slots for vet $veterinarianUid, ${daySlots.length} match date ${localDay.year}-${localDay.month}-${localDay.day}');
+          return daySlots;
         });
   }
 
@@ -251,14 +280,15 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     required String veterinarianUid,
     DateTime? fromDate,
   }) {
-    final start = fromDate ?? DateTime.now();
+    final start = fromDate?.toLocal() ?? DateTime.now();
+    debugPrint('[AppointmentBooking] streamAvailableSlots: vet=$veterinarianUid from $start (isDemo=$isDemo)');
 
     if (isDemo) {
       final slots = _demoSlots.values
           .where((s) =>
               s.veterinarianUid == veterinarianUid &&
               s.status == SlotStatus.available &&
-              s.startAt.isAfter(start))
+              s.startAt.toLocal().isAfter(start))
           .toList()
         ..sort((a, b) => a.startAt.compareTo(b.startAt));
       return Stream.value(slots);
@@ -267,12 +297,22 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
     return _slotsCol
         .where('veterinarianUid', isEqualTo: veterinarianUid)
         .snapshots()
+        .handleError((error, stackTrace) {
+          debugPrint('🔴 [AppointmentBooking] streamAvailableSlots Firestore error: $error');
+        })
         .map((snapshot) {
           final list = snapshot.docs
-              .map((doc) => AppointmentSlot.fromFirestore(doc.data(), doc.id))
+              .map((doc) {
+                try {
+                  return AppointmentSlot.fromFirestore(doc.data(), doc.id);
+                } catch (e) {
+                  return null;
+                }
+              })
+              .whereType<AppointmentSlot>()
               .where((s) =>
                   s.status == SlotStatus.available &&
-                  s.startAt.isAfter(start))
+                  s.startAt.toLocal().isAfter(start))
               .toList()
             ..sort((a, b) => a.startAt.compareTo(b.startAt));
           return list;

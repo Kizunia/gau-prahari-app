@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +29,63 @@ import 'features/voice_assistant/presentation/controllers/voice_assistant_contro
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Global error catching and verbose console.log / debugPrint reporting
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('🔴 [FlutterError] ${details.exception}');
+    if (details.stack != null) {
+      debugPrint(details.stack.toString());
+    }
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('🔴 [PlatformDispatcher Error] $error');
+    debugPrint(stack.toString());
+    return true;
+  };
+
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: Colors.white,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.error_outline_rounded, color: Colors.red, size: 28),
+                    SizedBox(width: 8),
+                    Text(
+                      'Rendering Error',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  details.exceptionAsString(),
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
 
   // Initialize Firebase (real cloud backend)
   await FirebaseInitializer.initialize();

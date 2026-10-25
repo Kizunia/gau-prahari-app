@@ -402,6 +402,7 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
         }
 
         if (snapshot.hasError) {
+          debugPrint('🔴 [FarmerBookingScreen] Error loading slots: ${snapshot.error}');
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -426,6 +427,7 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
 
         final allSlots = snapshot.data ?? [];
         final availableSlots = allSlots.where((s) => s.isAvailable).toList();
+        debugPrint('[FarmerBookingScreen] Date ${_selectedDate.day}/${_selectedDate.month}: total=${allSlots.length}, available=${availableSlots.length}');
 
         if (availableSlots.isEmpty) {
           return Container(
@@ -435,14 +437,36 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.event_busy_rounded, size: 20, color: AppColors.textSecondary),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'No available time slots on this date. Please pick another date above.',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                const Row(
+                  children: [
+                    Icon(Icons.event_busy_rounded, size: 20, color: AppColors.textSecondary),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'No available time slots on this date. Please pick another date above.',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedDate = _selectedDate.add(const Duration(days: 1));
+                      _selectedSlot = null;
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: const Text('Check Next Day', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
@@ -470,6 +494,9 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
 
   Widget _buildCowDropdown(CowController cowCtrl) {
     final cows = cowCtrl.cows;
+    final cowExists = cows.any((c) => c.id == _selectedCowId);
+    final effectiveCowId = cowExists ? _selectedCowId : null;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
@@ -480,7 +507,7 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           isExpanded: true,
-          value: _selectedCowId,
+          value: effectiveCowId,
           hint: const Text('None (General Consultation)', style: TextStyle(fontSize: 13)),
           items: [
             const DropdownMenuItem<String?>(
@@ -514,11 +541,24 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
   }
 
   Widget _buildReviewDropdown(String farmerUid) {
-    final vetRepo = context.watch<VetReviewRepository>();
+    final user = context.watch<AuthController>().currentUser;
+    if (user?.isDemo == true || farmerUid.startsWith('demo_')) {
+      return const SizedBox.shrink();
+    }
+
+    final vetRepo = context.read<VetReviewRepository>();
     return StreamBuilder<List<ReviewRequest>>(
       stream: vetRepo.streamFarmerRequests(farmerUid),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint('[FarmerBookingScreen] streamFarmerRequests error: ${snapshot.error}');
+          return const SizedBox.shrink();
+        }
+
         final requests = snapshot.data ?? [];
+        final reqExists = requests.any((r) => r.id == _selectedReviewRequestId);
+        final effectiveReqId = reqExists ? _selectedReviewRequestId : null;
+
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
@@ -529,7 +569,7 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String?>(
               isExpanded: true,
-              value: _selectedReviewRequestId,
+              value: effectiveReqId,
               hint: const Text('None (Standalone Booking)', style: TextStyle(fontSize: 13)),
               items: [
                 const DropdownMenuItem<String?>(
@@ -592,6 +632,8 @@ class _FarmerBookingScreenState extends State<FarmerBookingScreen> {
             onPressed: (_selectedSlot == null || _isBooking) ? null : _handleConfirmBooking,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              minimumSize: const Size(130, 44),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: _isBooking
                 ? const SizedBox(

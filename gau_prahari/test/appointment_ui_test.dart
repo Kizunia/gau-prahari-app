@@ -10,6 +10,8 @@ import 'package:gau_prahari/features/appointment_booking/domain/entities/appoint
 import 'package:gau_prahari/features/appointment_booking/domain/repositories/appointment_repository.dart';
 import 'package:gau_prahari/features/appointment_booking/presentation/screens/appointment_detail_screen.dart';
 import 'package:gau_prahari/features/appointment_booking/presentation/screens/farmer_appointments_screen.dart';
+import 'package:gau_prahari/features/appointment_booking/presentation/screens/farmer_booking_screen.dart';
+import 'package:gau_prahari/features/vet_review/domain/entities/vet_profile.dart';
 import 'package:gau_prahari/features/appointment_booking/presentation/screens/veterinarian_availability_screen.dart';
 import 'package:gau_prahari/features/appointment_booking/presentation/screens/veterinarian_directory_screen.dart';
 import 'package:gau_prahari/features/auth/domain/entities/user.dart';
@@ -208,6 +210,40 @@ void main() {
 
       await tester.scrollUntilVisible(find.text('Publish Next 14 Days Slots'), 200);
       expect(find.text('Publish Next 14 Days Slots'), findsOneWidget);
+    });
+
+    testWidgets('FarmerBookingScreen renders slots and date selector', (tester) async {
+      final authRepo = MockAuthRepository();
+      authRepo.setUser(const User(
+        id: 'demo_farmer_001',
+        name: 'Ramesh Patel',
+        identifier: 'farmer@gauprahari.org',
+        role: 'farmer',
+        isDemo: true,
+      ));
+      final authController = AuthController(authRepository: authRepo);
+      await authController.checkAuthStatus();
+
+      final appointmentRepo = FirestoreAppointmentRepository(isDemo: true);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          authController: authController,
+          appointmentRepository: appointmentRepo,
+          child: const FarmerBookingScreen(
+            veterinarian: VetProfile(
+              uid: 'demo_vet_001',
+              name: 'Dr. Sharma, DVM',
+              email: 'vet@gauprahari.org',
+            ),
+            preselectedCowId: 'cow_missing_id',
+            preselectedReviewRequestId: 'review_missing_id',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Schedule Appointment'), findsOneWidget);
     });
 
     testWidgets('AppointmentDetailScreen renders consultation details and cancel action', (tester) async {
