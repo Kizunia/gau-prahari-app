@@ -3,6 +3,7 @@ import 'package:gau_prahari/features/appointment_booking/data/repositories/fires
 import 'package:gau_prahari/features/appointment_booking/domain/entities/appointment.dart';
 import 'package:gau_prahari/features/appointment_booking/domain/entities/appointment_slot.dart';
 import 'package:gau_prahari/features/appointment_booking/domain/entities/appointment_status.dart';
+import 'package:gau_prahari/features/appointment_booking/domain/entities/google_meet_link.dart';
 import 'package:gau_prahari/features/appointment_booking/domain/entities/veterinarian_schedule.dart';
 import 'package:gau_prahari/features/appointment_booking/domain/entities/weekly_day_schedule.dart';
 
@@ -380,6 +381,60 @@ void main() {
         day: slotStart,
       ).first;
       expect(slots.firstWhere((s) => s.id == slot.id).status, equals(SlotStatus.available));
+    });
+  });
+
+  group('Shared veterinarian Google Meet link', () {
+    late FirestoreAppointmentRepository repo;
+
+    setUp(() {
+      repo = FirestoreAppointmentRepository(isDemo: true);
+    });
+
+    test('one veterinarian link is available to every appointment', () async {
+      const meetLink = 'https://meet.google.com/abc-defg-hij';
+
+      await repo.saveVeterinarianMeetLink(
+        veterinarianUid: 'demo_vet_001',
+        meetLink: meetLink,
+      );
+
+      expect(await repo.getVeterinarianMeetLink('demo_vet_001'), meetLink);
+      expect(
+        await repo.streamVeterinarianMeetLink('demo_vet_001').first,
+        meetLink,
+      );
+    });
+
+    test('a veterinarian can clear the shared link', () async {
+      await repo.saveVeterinarianMeetLink(
+        veterinarianUid: 'demo_vet_001',
+        meetLink: 'https://meet.google.com/abc-defg-hij',
+      );
+
+      await repo.saveVeterinarianMeetLink(
+        veterinarianUid: 'demo_vet_001',
+        meetLink: '',
+      );
+
+      expect(await repo.getVeterinarianMeetLink('demo_vet_001'), isNull);
+    });
+
+    test('only HTTPS Google Meet links are accepted', () async {
+      expect(
+        GoogleMeetLink.normalize('https://meet.google.com/abc-defg-hij'),
+        'https://meet.google.com/abc-defg-hij',
+      );
+      expect(GoogleMeetLink.normalize('https://example.com/meeting'), isNull);
+      expect(GoogleMeetLink.normalize('http://meet.google.com/meeting'), isNull);
+
+      await expectLater(
+        repo.saveVeterinarianMeetLink(
+          veterinarianUid: 'demo_vet_001',
+          meetLink: 'https://example.com/meeting',
+        ),
+        throwsArgumentError,
+      );
     });
   });
 }

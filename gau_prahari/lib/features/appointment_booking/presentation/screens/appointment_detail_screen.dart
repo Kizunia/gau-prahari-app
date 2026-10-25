@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../vet_review/presentation/screens/farmer_review_detail_screen.dart';
 import '../../../vet_review/presentation/screens/veterinarian_review_detail_screen.dart';
 import '../../domain/entities/appointment.dart';
+import '../../domain/entities/google_meet_link.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../widgets/appointment_status_badge.dart';
 
@@ -222,6 +224,14 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                 // 4. Linked Clinical Review Request Card
                 if (appointment.hasLinkedReview) ...[
                   _buildLinkedReviewCard(appointment, isVet),
+                  const SizedBox(height: 14),
+                ],
+
+                if (appointment.isBooked &&
+                    user != null &&
+                    (user.id == appointment.farmerUid ||
+                        user.id == appointment.veterinarianUid)) ...[
+                  _buildMeetLinkCard(appointment, repo),
                   const SizedBox(height: 14),
                 ],
 
@@ -486,5 +496,79 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildMeetLinkCard(
+    Appointment appointment,
+    AppointmentRepository repo,
+  ) {
+    return StreamBuilder<String?>(
+      stream: repo.streamVeterinarianMeetLink(appointment.veterinarianUid),
+      builder: (context, snapshot) {
+        final meetLink = snapshot.data;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.video_call_outlined, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text(
+                    'Video consultation',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const LinearProgressIndicator()
+              else if (snapshot.hasError)
+                const Text(
+                  'Could not load the veterinarian’s Google Meet link.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                )
+              else if (meetLink == null || meetLink.trim().isEmpty)
+                const Text(
+                  'The veterinarian has not added a Google Meet link yet.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openMeetLink(meetLink),
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    label: const Text('Join Google Meet'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openMeetLink(String meetLink) async {
+    final normalized = GoogleMeetLink.normalize(meetLink);
+    final uri = normalized == null || normalized.isEmpty
+        ? null
+        : Uri.tryParse(normalized);
+    if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the Google Meet link.')),
+      );
+    }
   }
 }

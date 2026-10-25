@@ -9,6 +9,7 @@ import '../widgets/review_request_card.dart';
 import 'veterinarian_review_detail_screen.dart';
 import '../../../appointment_booking/presentation/screens/veterinarian_appointments_screen.dart';
 import '../../../appointment_booking/presentation/screens/veterinarian_availability_screen.dart';
+import '../../../appointment_booking/presentation/screens/veterinarian_meet_link_screen.dart';
 
 
 /// Dashboard screen for authenticated veterinarians displaying assigned review requests.
@@ -77,6 +78,17 @@ class _VeterinarianDashboardScreenState
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.video_call_outlined, color: AppColors.primary),
+            tooltip: 'Google Meet Link',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const VeterinarianMeetLinkScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.event_note_rounded, color: AppColors.primary),
             tooltip: 'Appointments',

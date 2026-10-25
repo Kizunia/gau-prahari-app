@@ -5,6 +5,7 @@ import '../../../vet_review/domain/entities/vet_profile.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/entities/appointment_slot.dart';
 import '../../domain/entities/appointment_status.dart';
+import '../../domain/entities/google_meet_link.dart';
 import '../../domain/entities/veterinarian_schedule.dart';
 import '../../domain/repositories/appointment_repository.dart';
 
@@ -19,6 +20,7 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
   final Map<String, VeterinarianSchedule> _demoSchedules = {};
   final Map<String, AppointmentSlot> _demoSlots = {};
   final Map<String, Appointment> _demoAppointments = {};
+  final Map<String, String> _demoMeetLinks = {};
 
   FirestoreAppointmentRepository({
     FirebaseFirestore? firestore,
@@ -116,6 +118,49 @@ class FirestoreAppointmentRepository implements AppointmentRepository {
         ),
       ];
     }
+  }
+
+  @override
+  Future<String?> getVeterinarianMeetLink(String veterinarianUid) async {
+    if (isDemo) return _demoMeetLinks[veterinarianUid];
+
+    final doc = await _usersCol.doc(veterinarianUid).get();
+    return doc.data()?['googleMeetLink'] as String?;
+  }
+
+  @override
+  Stream<String?> streamVeterinarianMeetLink(String veterinarianUid) {
+    if (isDemo) return Stream.value(_demoMeetLinks[veterinarianUid]);
+
+    return _usersCol.doc(veterinarianUid).snapshots().map(
+      (doc) => doc.data()?['googleMeetLink'] as String?,
+    );
+  }
+
+  @override
+  Future<void> saveVeterinarianMeetLink({
+    required String veterinarianUid,
+    required String meetLink,
+  }) async {
+    final normalized = GoogleMeetLink.normalize(meetLink);
+    if (normalized == null) {
+      throw ArgumentError.value(meetLink, 'meetLink', 'Invalid Google Meet URL');
+    }
+
+    if (isDemo) {
+      if (normalized.isEmpty) {
+        _demoMeetLinks.remove(veterinarianUid);
+      } else {
+        _demoMeetLinks[veterinarianUid] = normalized;
+      }
+      return;
+    }
+
+    await _usersCol.doc(veterinarianUid).update({
+      'googleMeetLink': normalized.isEmpty
+          ? FieldValue.delete()
+          : normalized,
+    });
   }
 
   @override

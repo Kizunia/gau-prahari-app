@@ -10,6 +10,18 @@ abstract class AppointmentRepository {
   /// Retrieves registered veterinarians from Firestore profiles for the booking directory.
   Future<List<VetProfile>> getVeterinarianDirectory();
 
+  /// Returns the veterinarian's shared video-call link, if one is configured.
+  Future<String?> getVeterinarianMeetLink(String veterinarianUid);
+
+  /// Streams changes to the veterinarian's shared video-call link.
+  Stream<String?> streamVeterinarianMeetLink(String veterinarianUid);
+
+  /// Sets or clears the veterinarian's shared video-call link.
+  Future<void> saveVeterinarianMeetLink({
+    required String veterinarianUid,
+    required String meetLink,
+  });
+
   /// Retrieves a veterinarian's recurring weekly schedule.
   Future<VeterinarianSchedule?> getVeterinarianSchedule(String veterinarianUid);
 
